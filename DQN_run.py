@@ -1,4 +1,3 @@
-
 import argparse
 import os
 import random
@@ -19,33 +18,16 @@ from ray.rllib.utils.framework import try_import_tf
 from ray.rllib.utils.test_utils import check_learning_achieved
 from core.custom_logger import CustomLoggerCallback
 
-
 tf1, tf, tfv = try_import_tf()
 
 parser = argparse.ArgumentParser()
-
 parser.add_argument("--num-cpus", type=int, default=0)
-parser.add_argument(
-    "--framework",
-    choices=["tf", "tf2", "torch"],
-    default="torch",
-    help="The DL framework specifier.",
-)
-parser.add_argument(
-    "--as-test",
-    action="store_true",
-    help="Whether this script should be run as a test: --stop-reward must "
-    "be achieved within --stop-timesteps AND --stop-iters.",
-)
-parser.add_argument(
-    "--stop-iters", type=int, default=2000, help="Number of iterations to train."
-)
-parser.add_argument(
-    "--rv-rate", type=float, default=1.0, help="RV percentage. 0.0-1.0"
-)
+parser.add_argument("--framework",choices=["tf", "tf2", "torch"],default="torch",help="The DL framework specifier.")
+parser.add_argument("--as-test",action="store_true",help="Whether this script should be run as a test: --stop-reward must be achieved within --stop-timesteps AND --stop-iters.")
+parser.add_argument("--stop-iters", type=int, default=2000, help="Number of iterations to train.")
+parser.add_argument("--rv-rate", type=float, default=1.0, help="RV percentage. 0.0-1.0")
+
 if __name__ == "__main__":
-
-
     args = parser.parse_args()
 
     ray.init(num_gpus=1, num_cpus=args.num_cpus)
@@ -75,7 +57,7 @@ if __name__ == "__main__":
             None
         )}
     policy_mapping_fn = lambda agent_id, episode, worker, **kwargs: "shared_policy"
-            
+
     config = (
         DQNConfig()
         .environment(Env, env_config={
@@ -83,7 +65,7 @@ if __name__ == "__main__":
             "spawn_rl_prob":{},
             "probablity_RL":args.rv_rate,
             "cfg":'real_data/osm.sumocfg',
-            "render":False,
+            "render":True,
             "map_xml":'real_data/CSeditClean_1.net_threelegs.xml',
             # "rl_prob_range": [i*0.1 for i in range(5, 10)], # change RV penetration rate when reset
             "max_episode_steps":1000,
