@@ -65,7 +65,7 @@ if __name__ == "__main__":
             "spawn_rl_prob":{},
             "probablity_RL":args.rv_rate,
             "cfg":'real_data/osm.sumocfg',
-            "render":True,
+            "render":False,
             "map_xml":'real_data/CSeditClean_1.net_threelegs.xml',
             # "rl_prob_range": [i*0.1 for i in range(5, 10)], # change RV penetration rate when reset
             "max_episode_steps":1000,
