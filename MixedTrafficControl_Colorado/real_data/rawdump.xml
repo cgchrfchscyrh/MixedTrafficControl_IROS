@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- generated on 2024-11-14 16:50:23 by Eclipse SUMO GUI Version 1.21.0
+<sumoConfiguration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/sumoConfiguration.xsd">
+
+    <input>
+        <net-file value="D:\code\MixedTrafficControl-main\real_data\CSeditClean_1.net_threelegs.xml"/>
+        <route-files value="D:\code\MixedTrafficControl-main\real_data\newroute1220_start0.xml"/>
+    </input>
+
+    <output>
+        <netstate-dump value="D:\code\MixedTrafficControl-main\real_data\rawdump.xml"/>
+    </output>
+
+    <processing>
+        <ignore-route-errors value="true"/>
+    </processing>
+
+    <report>
+        <verbose value="true"/>
+        <duration-log.statistics value="true"/>
+        <no-step-log value="true"/>
+    </report>
+
+    <gui_only>
+        <gui-settings-file value="D:\code\MixedTrafficControl-main\real_data\osm.view.xml"/>
+    </gui_only>
+
+</sumoConfiguration>
