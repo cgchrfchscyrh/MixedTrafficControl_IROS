@@ -20,7 +20,7 @@ parser.add_argument("--num-cpus", type=int, default=0)
 parser.add_argument("--framework",choices=["tf", "tf2", "torch"],default="torch",help="The DL framework specifier.")
 parser.add_argument("--as-test",action="store_true",help="Whether this script should be run as a test: --stop-reward must be achieved within --stop-timesteps AND --stop-iters.")
 parser.add_argument("--stop-iters", type=int, default=2000, help="Number of iterations to train.")
-parser.add_argument("--rv-rate", type=float, default=1.0, help="RV percentage. 0.0-1.0")
+parser.add_argument("--rv-rate", type=float, default=0.0, help="RV percentage. 0.0-1.0")
 
 if __name__ == "__main__":
     args = parser.parse_args()
