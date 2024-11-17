@@ -28,7 +28,10 @@ if __name__ == "__main__":
     ray.init(num_gpus=1, num_cpus=args.num_cpus)
 
     dummy_env = Env({
-            "junction_list":['229','499','332','334'], #路口列表
+            "junction_list":['cluster_1021221509_11808122037_11808122038_11808122040_#4more',
+                    'cluster_2040873690_2040873694_2040873705_2040873709_#8more',
+                    'cluster_1334947864_1334947865_1334947879_1334947882',
+                    'cluster_2048655723_2048656743_2048656762_2048657045_#8more'],
             "spawn_rl_prob":{},
             "probablity_RL":args.rv_rate,
             "cfg":'sumo_networks/colorado/colorado.sumocfg',
@@ -59,7 +62,10 @@ if __name__ == "__main__":
     config = (
         DQNConfig()
         .environment(Env, env_config={
-            "junction_list":['229','499','332','334'],
+            "junction_list":['cluster_1021221509_11808122037_11808122038_11808122040_#4more',
+                             'cluster_2040873690_2040873694_2040873705_2040873709_#8more',
+                             'cluster_1334947864_1334947865_1334947879_1334947882',
+                             'cluster_2048655723_2048656743_2048656762_2048657045_#8more'],
             "spawn_rl_prob":{},
             "probablity_RL":args.rv_rate,
             # "cfg":'real_data/osm.sumocfg',
