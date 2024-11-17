@@ -34,15 +34,21 @@ parser.add_argument(
 if __name__ == "__main__":
     args = parser.parse_args()
 
-    
     ## TODO map xml could be parsed from sumocfg file
     env = Env({
-            "junction_list":['229','499','332','334'],
+            "junction_list":['cluster_1021221509_11808122037_11808122038_11808122040_#4more',
+                             'cluster_2040873690_2040873694_2040873705_2040873709_#8more',
+                             'cluster_1334947864_1334947865_1334947879_1334947882',
+                             'cluster_2048655723_2048656743_2048656762_2048657045_#8more'],
             "spawn_rl_prob":{},
             "probablity_RL":0.0,
-            "cfg":'real_data/osm.sumocfg',
+            # "cfg":'real_data/osm.sumocfg',
+            "cfg":'sumo_networks/colorado/colorado.sumocfg',
+
             "render":True,
-            "map_xml":'real_data/CSeditClean_1.net_threelegs.xml',
+            # "map_xml":'real_data/CSeditClean_1.net_threelegs.xml',
+            "map_xml":'sumo_networks/colorado/colorado.net.xml',
+
             "max_episode_steps":1000,
             "traffic_light_program":{
                 "disable_state":'G',
@@ -54,12 +60,12 @@ if __name__ == "__main__":
     dones = truncated = {}
     dones['__all__'] = truncated['__all__'] = False
 
-
     obs, info = env.reset(options={'mode': 'HARD'})
 
     while not dones['__all__'] and not truncated['__all__']:
         actions = {}
         obs, reward, dones, truncated, info = env.step(actions)
+
         for key, done in dones.items():
             if done:
                 obs.pop(key)
