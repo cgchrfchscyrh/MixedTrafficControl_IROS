@@ -32,12 +32,16 @@ if __name__ == "__main__":
                     'cluster_2040873690_2040873694_2040873705_2040873709_#8more',
                     'cluster_1334947864_1334947865_1334947879_1334947882',
                     'cluster_2048655723_2048656743_2048656762_2048657045_#8more'],
+            # "junction_list":['229','499','332','334'],
+
             "spawn_rl_prob":{},
             "probablity_RL":args.rv_rate,
-            "cfg":'sumo_networks/colorado/colorado.sumocfg',
+            # "cfg":'real_data/osm_roundabouts_2.sumocfg',
+            "cfg":'sumo_networks/colorado/colorado_roundabouts_singleLine.sumocfg',
+
             "render":False,
             # "map_xml":'real_data/CSeditClean_1.net_threelegs.xml', #地图
-            "map_xml":'sumo_networks/colorado/colorado.net.xml',
+            "map_xml":'sumo_networks/colorado/colorado_roundabouts_singleLine.net.xml',
             "max_episode_steps":1000,
             "conflict_mechanism":'flexible',
             "traffic_light_program":{ #交通灯
@@ -66,13 +70,18 @@ if __name__ == "__main__":
                              'cluster_2040873690_2040873694_2040873705_2040873709_#8more',
                              'cluster_1334947864_1334947865_1334947879_1334947882',
                              'cluster_2048655723_2048656743_2048656762_2048657045_#8more'],
+                        
+            # "junction_list":['229','499','332','334'],
+
             "spawn_rl_prob":{},
             "probablity_RL":args.rv_rate,
-            # "cfg":'real_data/osm.sumocfg',
-            "cfg":'sumo_networks/colorado/colorado.sumocfg',
-            "render":False,
-            # "map_xml":'real_data/CSeditClean_1.net_threelegs.xml',
-            "map_xml":'sumo_networks/colorado/colorado.net.xml',
+            "cfg":'sumo_networks/colorado/colorado_roundabouts_singleLine.sumocfg',
+            # "cfg":'real_data/osm_roundabouts_2.sumocfg',
+
+            "render":True,
+            "map_xml":'sumo_networks/colorado/colorado_roundabouts_singleLine.net.xml',
+            # "map_xml":'real_data/CSeditClean_1.net_threelegs_roundabouts_2.xml',
+
             # "rl_prob_range": [i*0.1 for i in range(5, 10)], # change RV penetration rate when reset
             "max_episode_steps":1000,
             "conflict_mechanism":'flexible',
@@ -95,7 +104,9 @@ if __name__ == "__main__":
                 'capacity':50000,
             }
         )
-        .rollouts(num_rollout_workers=args.num_cpus-1, rollout_fragment_length="auto")
+        # .rollouts(num_rollout_workers=args.num_cpus-1, rollout_fragment_length="auto")
+        .rollouts(num_rollout_workers=args.num_cpus-1, rollout_fragment_length=50)
+
         .multi_agent(policies=policy, policy_mapping_fn=policy_mapping_fn)
         # Use GPUs iff `RLLIB_NUM_GPUS` env var set to > 0.ass 'ray.rllib.policy.policy_template.DQNTorchPolicy'> for PolicyID=shared_policy
         .resources(num_gpus=1, num_cpus_per_worker=1)
