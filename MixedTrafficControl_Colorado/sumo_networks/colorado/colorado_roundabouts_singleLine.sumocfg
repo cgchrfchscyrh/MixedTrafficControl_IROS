@@ -1,7 +1,7 @@
 <configuration>
     <input>
-        <net-file value="colorado.net.xml"/>
-        <route-files value="colorado.rou.xml"/>
+        <net-file value="colorado_roundabouts_singleLine.net.xml"/>
+        <route-files value="colorado_roundabouts_singleLine.rou.xml"/>
     </input>
     <time>
         <begin value="0"/>
