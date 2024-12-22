@@ -25,7 +25,7 @@ parser.add_argument("--rv-rate", type=float, default=0.2, help="RV percentage. 0
 if __name__ == "__main__":
     args = parser.parse_args()
 
-    ray.init(num_gpus=1, num_cpus=args.num_cpus)
+    ray.init(num_gpus=0, num_cpus=args.num_cpus, _temp_dir="D:\\ray_temp_dir")
 
     dummy_env = Env({
             "junction_list":['cluster_1021221509_11808122037_11808122038_11808122040_#4more',
@@ -109,7 +109,7 @@ if __name__ == "__main__":
 
         .multi_agent(policies=policy, policy_mapping_fn=policy_mapping_fn)
         # Use GPUs iff `RLLIB_NUM_GPUS` env var set to > 0.ass 'ray.rllib.policy.policy_template.DQNTorchPolicy'> for PolicyID=shared_policy
-        .resources(num_gpus=1, num_cpus_per_worker=1)
+        .resources(num_gpus=0, num_cpus_per_worker=1)
         .callbacks(CustomLoggerCallback)
     )
 
@@ -120,11 +120,20 @@ if __name__ == "__main__":
     results = tune.Tuner(
         "DQN",
         param_space=config.to_dict(),
-        run_config=air.RunConfig(name='DQN_RV'+str(args.rv_rate), stop=stop, verbose=3, log_to_file=True, 
-        checkpoint_config=air.CheckpointConfig(
-            num_to_keep = 40,
-            checkpoint_frequency = 10
-        )),
+        run_config=air.RunConfig(
+            name='DQN_RV'+str(args.rv_rate), 
+        
+            # storage_path = "D:\\waht_ray_results", 
+
+            local_dir='D:\\ray_results',
+
+            stop=stop, 
+            verbose=3, 
+            log_to_file=True, 
+            checkpoint_config=air.CheckpointConfig(
+                num_to_keep = 40,
+                checkpoint_frequency = 10)
+        ),
     ).fit()
 
     if args.as_test:
