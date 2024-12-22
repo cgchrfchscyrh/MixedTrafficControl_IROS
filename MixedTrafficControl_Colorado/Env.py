@@ -5,7 +5,9 @@ from core.costomized_data_structures import Vehicle, Container
 from core.NetMap import NetMap
 import numpy as np
 import random, math
-from gym.spaces.box import Box #type:ignore
+# from gym.spaces.box import Box #type:ignore
+from gymnasium.spaces.box import Box #type:ignore
+
 from ray.rllib.env.multi_agent_env import MultiAgentEnv #type:ignore
 from copy import deepcopy
 from core.utils import start_edges, end_edges, dict_tolist, UNCONFLICT_SET
@@ -49,6 +51,10 @@ class Env(MultiAgentEnv):
         self.control_zone_length = 100
         self.max_wait_time = 200
         self.vehicle_len = 5.0
+
+        self.departed_count = 0  # 记录进入网络的车辆数
+        self.arrived_count = 0  # 记录离开网络的车辆数
+        self.traffic_flow_history = []  # 用于记录历史的车流量数据
         
         self.init_env()
         self.previous_global_waiting = dict()
@@ -497,6 +503,14 @@ class Env(MultiAgentEnv):
         #sumo step
         self.sumo_interface.step() # self.tc.simulationStep()
 
+        # 获取进入和离开网络的车辆数量
+        self.departed_count = len(self.sumo_interface.tc.simulation.getDepartedIDList())
+        self.arrived_count = len(self.sumo_interface.tc.simulation.getArrivedIDList())
+
+        # 记录当前时间步的车流量
+        current_traffic_flow = self.departed_count + self.arrived_count
+        self.traffic_flow_history.append(current_traffic_flow)
+
         # gathering states from sumo 
         sim_res = self.sumo_interface.get_sim_info()
         
@@ -605,7 +619,11 @@ class Env(MultiAgentEnv):
                     obs[virtual_id] = self.check_obs_constraint(np.concatenate((obs_control_queue_length, np.array(obs_waiting_lst), np.reshape(np.array(obs_inner_lst), (80,)))))
                     self.terminate_veh(virtual_id)    
         dones['__all__'] = False
+
         infos = {}
+        # infos["departed_count"] = departed_count
+        # infos["arrived_count"] = arrived_count
+
         truncated = {}
         truncated['__all__'] = False
         if self._step >= self._max_episode_steps:
