@@ -30,6 +30,7 @@ class CustomLoggerCallback(DefaultCallbacks):
         ):
         episode.user_data["conflict_rate"] = []
         episode.user_data["avg_wait"] = []
+        episode.user_data["traffic_flow_rate"] = []  # 新增车流量列表
 
     def on_episode_step(
             self,
@@ -41,6 +42,13 @@ class CustomLoggerCallback(DefaultCallbacks):
             env_index= None,
             **kwargs,
         ):
+        # 访问 env 的 traffic_flow_history
+        if hasattr(worker.env, "traffic_flow_history") and worker.env.traffic_flow_history:
+            # 获取最新的车流量
+            current_traffic_flow = worker.env.traffic_flow_history[-1]
+            # 存储到 episode.user_data 中
+            episode.user_data["traffic_flow_rate"].append(current_traffic_flow)
+
         conflict_rate = worker.env.monitor.conflict_rate[-1]
         episode.user_data["conflict_rate"].extend([conflict_rate])
         total_wait = 0
@@ -61,7 +69,11 @@ class CustomLoggerCallback(DefaultCallbacks):
         episode.custom_metrics["conflict_rate"] = np.mean(episode.user_data["conflict_rate"])
         episode.custom_metrics["avg_wait"] = np.mean(episode.user_data["avg_wait"])
 
-
+        # 计算平均车流量
+        if episode.user_data["traffic_flow_rate"]:
+            episode.custom_metrics["traffic_flow_rate"] = np.mean(episode.user_data["traffic_flow_rate"])
+        else:
+            episode.custom_metrics["traffic_flow_rate"] = 0  # 防止无数据
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
