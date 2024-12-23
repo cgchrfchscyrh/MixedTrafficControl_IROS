@@ -52,9 +52,9 @@ class Env(MultiAgentEnv):
         self.max_wait_time = 200
         self.vehicle_len = 5.0
 
-        self.departed_count = 0  # 记录进入网络的车辆数
-        self.arrived_count = 0  # 记录离开网络的车辆数
-        self.traffic_flow_history = []  # 用于记录历史的车流量数据
+        self.total_departed_count  = 0  # 记录进入网络的车辆数
+        self.total_arrived_count = 0  # 记录离开网络的车辆数
+        # self.traffic_flow_history = []  # 用于记录历史的车流量数据
         
         self.init_env()
         self.previous_global_waiting = dict()
@@ -504,12 +504,22 @@ class Env(MultiAgentEnv):
         self.sumo_interface.step() # self.tc.simulationStep()
 
         # 获取进入和离开网络的车辆数量
-        self.departed_count = len(self.sumo_interface.tc.simulation.getDepartedIDList())
-        self.arrived_count = len(self.sumo_interface.tc.simulation.getArrivedIDList())
+        # self.departed_count = len(self.sumo_interface.tc.simulation.getDepartedIDList())
+        # self.arrived_count = len(self.sumo_interface.tc.simulation.getArrivedIDList())
+        # current_departed = len(self.sumo_interface.tc.simulation.getDepartedIDList())
+        # current_arrived = len(self.sumo_interface.tc.simulation.getArrivedIDList())
 
-        # 记录当前时间步的车流量
-        current_traffic_flow = self.departed_count + self.arrived_count
-        self.traffic_flow_history.append(current_traffic_flow)
+        # 使用 SUMO API 获取当前步进入和离开网络的车辆数量
+        current_departed = self.sumo_interface.tc.simulation.getDepartedNumber()
+        current_arrived = self.sumo_interface.tc.simulation.getArrivedNumber()
+
+        # 更新累计统计数据
+        self.total_departed_count += current_departed
+        self.total_arrived_count += current_arrived
+
+        # # 记录当前时间步的车流量
+        # current_traffic_flow = self.departed_count + self.arrived_count
+        # self.traffic_flow_history.append(current_traffic_flow)
 
         # gathering states from sumo 
         sim_res = self.sumo_interface.get_sim_info()
