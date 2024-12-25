@@ -29,10 +29,14 @@ if __name__ == "__main__":
 
     dummy_env = Env({
             "junction_list":['cluster_1021221509_11808122037_11808122038_11808122040_#4more',
-                    'cluster9663732079_J0_J1_J2_#2more',
-                    'cluster_1334947864_1334947865_1334947879_1334947882',
-                    'cluster_2048655723_2048656743_2048656762_2048657045_#8more'],
-            # "junction_list":['229','499','332','334'],
+                    'cluster_2052409422_2052409707_542824247_542824770_#2more',
+                    'cluster_2093101229_2093101656_2093101781_2093101915_#8more',
+                    'cluster_439980117_439980118_442435910_442435912'],
+        
+            # "junction_list":['cluster_1021221509_11808122037_11808122038_11808122040_#4more',
+            #         'cluster9663732079_J0_J1_J2_#2more',
+            #         'cluster_1334947864_1334947865_1334947879_1334947882',
+            #         'cluster_2048655723_2048656743_2048656762_2048657045_#8more'],
 
             "spawn_rl_prob":{},
             "probablity_RL":args.rv_rate,
@@ -42,7 +46,7 @@ if __name__ == "__main__":
             "render":False,
             # "map_xml":'real_data/CSeditClean_1.net_threelegs.xml', #地图
             "map_xml":'sumo_networks/colorado/colorado_roundabouts_singleLine.net.xml',
-            "max_episode_steps":1000,
+            "max_episode_steps":1000, #1000
             "conflict_mechanism":'flexible',
             "traffic_light_program":{ #交通灯
                 "disable_state":'G',
@@ -67,12 +71,15 @@ if __name__ == "__main__":
         DQNConfig()
         .environment(Env, env_config={
             "junction_list":['cluster_1021221509_11808122037_11808122038_11808122040_#4more',
-                             'cluster9663732079_J0_J1_J2_#2more',
-                             'cluster_1334947864_1334947865_1334947879_1334947882',
-                             'cluster_2048655723_2048656743_2048656762_2048657045_#8more'],
+                    'cluster_2052409422_2052409707_542824247_542824770_#2more',
+                    'cluster_2093101229_2093101656_2093101781_2093101915_#8more',
+                    'cluster_439980117_439980118_442435910_442435912'],
+        
+            # "junction_list":['cluster_1021221509_11808122037_11808122038_11808122040_#4more',
+            #         'cluster9663732079_J0_J1_J2_#2more',
+            #         'cluster_1334947864_1334947865_1334947879_1334947882',
+            #         'cluster_2048655723_2048656743_2048656762_2048657045_#8more'],
                         
-            # "junction_list":['229','499','332','334'],
-
             "spawn_rl_prob":{},
             "probablity_RL":args.rv_rate,
             "cfg":'sumo_networks/colorado/colorado_roundabouts_singleLine.sumocfg',
@@ -83,7 +90,7 @@ if __name__ == "__main__":
             # "map_xml":'real_data/CSeditClean_1.net_threelegs_roundabouts_2.xml',
 
             # "rl_prob_range": [i*0.1 for i in range(5, 10)], # change RV penetration rate when reset
-            "max_episode_steps":1000,
+            "max_episode_steps":1000, #1000
             "conflict_mechanism":'flexible',
             "traffic_light_program":{
                 "disable_state":'G',
