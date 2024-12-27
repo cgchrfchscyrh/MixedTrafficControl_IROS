@@ -1,10 +1,22 @@
 <configuration>
+
     <input>
-        <net-file value="colorado_roundabouts.net.xml"/>
-        <route-files value="colorado.rou.xml"/>
+        <net-file value="colorado_roundabouts_singleLine.net.xml"/>
+        <route-files value="colorado_roundabouts_singleLine_1000s_3333v.rou.xml"/>
     </input>
-    <time>
-        <begin value="0"/>
-        <end value="1000"/>
-    </time>
+
+    <output>
+   	    <netstate-dump value="rawdump.xml" />
+    </output>
+
+    <processing>
+        <ignore-route-errors value="true"/>
+    </processing>
+
+    <report>
+        <verbose value="true"/>
+        <duration-log.statistics value="true"/>
+        <no-step-log value="true"/>
+    </report>
+
 </configuration>
