@@ -1,10 +1,6 @@
 <configuration>
     <input>
         <net-file value="colorado.net.xml"/>
-        <route-files value="colorado.rou.xml"/>
+        <route-files value="colorado_1000s_3333v.rou.xml"/>
     </input>
-    <time>
-        <begin value="0"/>
-        <end value="1000"/>
-    </time>
 </configuration>
