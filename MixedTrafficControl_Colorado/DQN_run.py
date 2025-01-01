@@ -25,13 +25,18 @@ parser.add_argument("--rv-rate", type=float, default=0.2, help="RV percentage. 0
 if __name__ == "__main__":
     args = parser.parse_args()
 
-    ray.init(num_gpus=0, num_cpus=args.num_cpus, _temp_dir="D:\\ray_temp_dir")
+    ray.init(num_gpus=1, num_cpus=args.num_cpus)
 
     dummy_env = Env({
-            "junction_list":['cluster_1021221509_11808122037_11808122038_11808122040_#4more',
+            "junction_list":['cluster12203246695_12203246696_430572036_442436239',
                     'cluster_2052409422_2052409707_542824247_542824770_#2more',
                     'cluster_2093101229_2093101656_2093101781_2093101915_#8more',
                     'cluster_439980117_439980118_442435910_442435912'],
+
+            # "junction_list":['cluster_1021221509_11808122037_11808122038_11808122040_#4more',
+            #         'cluster_2052409422_2052409707_542824247_542824770_#2more',
+            #         'cluster_2093101229_2093101656_2093101781_2093101915_#8more',
+            #         'cluster_439980117_439980118_442435910_442435912'],
         
             # "junction_list":['cluster_1021221509_11808122037_11808122038_11808122040_#4more',
             #         'cluster9663732079_J0_J1_J2_#2more',
@@ -41,11 +46,13 @@ if __name__ == "__main__":
             "spawn_rl_prob":{},
             "probablity_RL":args.rv_rate,
             # "cfg":'real_data/osm_roundabouts_2.sumocfg',
-            "cfg":'sumo_networks/colorado/colorado_roundabouts_singleLine.sumocfg',
+            "cfg":'sumo_networks/colorado/colorado.sumocfg',
+            # "cfg":'sumo_networks/colorado/colorado_roundabouts_singleLine.sumocfg',
 
             "render":False,
             # "map_xml":'real_data/CSeditClean_1.net_threelegs.xml', #地图
-            "map_xml":'sumo_networks/colorado/colorado_roundabouts_singleLine.net.xml',
+            # "map_xml":'sumo_networks/colorado/colorado_roundabouts_singleLine.net.xml',            
+            "map_xml":'sumo_networks/colorado/colorado.net.xml',
             "max_episode_steps":1000, #1000
             "conflict_mechanism":'flexible',
             "traffic_light_program":{ #交通灯
@@ -70,10 +77,15 @@ if __name__ == "__main__":
     config = (
         DQNConfig()
         .environment(Env, env_config={
-            "junction_list":['cluster_1021221509_11808122037_11808122038_11808122040_#4more',
+            "junction_list":['cluster12203246695_12203246696_430572036_442436239',
                     'cluster_2052409422_2052409707_542824247_542824770_#2more',
                     'cluster_2093101229_2093101656_2093101781_2093101915_#8more',
                     'cluster_439980117_439980118_442435910_442435912'],
+
+            # "junction_list":['cluster_1021221509_11808122037_11808122038_11808122040_#4more',
+            #         'cluster_2052409422_2052409707_542824247_542824770_#2more',
+            #         'cluster_2093101229_2093101656_2093101781_2093101915_#8more',
+            #         'cluster_439980117_439980118_442435910_442435912'],
         
             # "junction_list":['cluster_1021221509_11808122037_11808122038_11808122040_#4more',
             #         'cluster9663732079_J0_J1_J2_#2more',
@@ -82,11 +94,13 @@ if __name__ == "__main__":
                         
             "spawn_rl_prob":{},
             "probablity_RL":args.rv_rate,
-            "cfg":'sumo_networks/colorado/colorado_roundabouts_singleLine.sumocfg',
+            "cfg":'sumo_networks/colorado/colorado.sumocfg',
+            # "cfg":'sumo_networks/colorado/colorado_roundabouts_singleLine.sumocfg',
             # "cfg":'real_data/osm_roundabouts_2.sumocfg',
 
             "render":True,
-            "map_xml":'sumo_networks/colorado/colorado_roundabouts_singleLine.net.xml',
+            "map_xml":'sumo_networks/colorado/colorado.net.xml',
+            # "map_xml":'sumo_networks/colorado/colorado_roundabouts_singleLine.net.xml',
             # "map_xml":'real_data/CSeditClean_1.net_threelegs_roundabouts_2.xml',
 
             # "rl_prob_range": [i*0.1 for i in range(5, 10)], # change RV penetration rate when reset
@@ -111,12 +125,12 @@ if __name__ == "__main__":
                 'capacity':50000,
             }
         )
-        # .rollouts(num_rollout_workers=args.num_cpus-1, rollout_fragment_length="auto")
-        .rollouts(num_rollout_workers=args.num_cpus-1, rollout_fragment_length=50)
+        .rollouts(num_rollout_workers=args.num_cpus-1, rollout_fragment_length="auto")
+        # .rollouts(num_rollout_workers=args.num_cpus-1, rollout_fragment_length=50)
 
         .multi_agent(policies=policy, policy_mapping_fn=policy_mapping_fn)
         # Use GPUs iff `RLLIB_NUM_GPUS` env var set to > 0.ass 'ray.rllib.policy.policy_template.DQNTorchPolicy'> for PolicyID=shared_policy
-        .resources(num_gpus=0, num_cpus_per_worker=1)
+        .resources(num_gpus=1, num_cpus_per_worker=1)
         .callbacks(CustomLoggerCallback)
     )
 
@@ -132,11 +146,11 @@ if __name__ == "__main__":
         
             # storage_path = "D:\\waht_ray_results", 
 
-            local_dir='D:\\ray_results',
+            # local_dir='D:\\ray_results',
 
             stop=stop, 
             verbose=3, 
-            log_to_file=True, 
+            log_to_file=False, 
             checkpoint_config=air.CheckpointConfig(
                 num_to_keep = 40,
                 checkpoint_frequency = 10)
