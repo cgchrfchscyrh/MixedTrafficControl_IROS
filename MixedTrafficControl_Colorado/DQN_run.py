@@ -150,7 +150,7 @@ if __name__ == "__main__":
 
             stop=stop, 
             verbose=3, 
-            log_to_file=False, 
+            log_to_file=True, 
             checkpoint_config=air.CheckpointConfig(
                 num_to_keep = 40,
                 checkpoint_frequency = 10)
