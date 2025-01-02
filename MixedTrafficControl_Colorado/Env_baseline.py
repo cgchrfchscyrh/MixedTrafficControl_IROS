@@ -19,6 +19,26 @@ CYAN = (0, 255, 255)
 RED = (255, 0, 0)
 EPSILON = 0.00001
 
+## For colorado.net.xml without roundabouts/one-way streets
+all_junction_list = ['cluster12203246695_12203246696_430572036_442436239', 
+                       'cluster_547498658_547498666_547498756_547498762_#8more', 
+                       'cluster_2052409830_2052409981_9356276530_9356276531', 
+                       'cluster_1021221509_11808122037_11808122038_11808122040_#4more',
+                       'cluster_2052409422_2052409707_542824247_542824770_#2more',
+                       'cluster_2052409323_2052409733_2052409806_2052409936_#9more',
+                       'cluster_2052409270_2052409892_2052410135_2052410161_#8more',
+                       'cluster_2040873690_2040873694_2040873705_2040873709_#8more',
+                       '55760356',
+                       'cluster_2093101229_2093101656_2093101781_2093101915_#8more',
+                       'cluster9663732079_J0_J1_J2_#2more',
+                       'cluster428692206_428692253_9650210478_9650210479_#2more',
+                       'cluster_1334947864_1334947865_1334947879_1334947882',
+                       'cluster12092955396_1334947859',
+                       'cluster_439980117_439980118_442435910_442435912',
+                       'cluster_1289585639_439979990_8156136067_8156136068_#1more',
+                       'cluster_2048655723_2048656743_2048656762_2048657045_#8more',
+                       'cluster1478663503_1478663508_cluster_12092966426_12092966445_1478663506_2515541702']
+
 class Env(MultiAgentEnv):
     def __init__(self, config) -> None:
         ## TODO: use config to pass parameters
@@ -36,14 +56,16 @@ class Env(MultiAgentEnv):
 
         self.junction_list = self.config['junction_list']
         self.sumo_interface = SUMO(self.cfg, render=self.config['render'])
-        self.map = NetMap(self.map_xml, self.junction_list)
+
+        self.map = NetMap(self.map_xml, all_junction_list)
+        # self.map = NetMap(self.map_xml, self.junction_list)
 
         self.spawn_rl_prob = config['spawn_rl_prob']
         self.default_rl_prob = config['probablity_RL']
         self.rl_prob_list = config['rl_prob_range'] if 'rl_prob_range' in config.keys() else None
 
-        self.start_edges = start_edges
-        self.end_edges = end_edges
+        # self.start_edges = start_edges
+        # self.end_edges = end_edges
 
         self.max_acc = 100
         self.min_acc = -100
@@ -52,17 +74,20 @@ class Env(MultiAgentEnv):
         self.max_wait_time = 200
         self.vehicle_len = 5.0
 
-        self.departed_count = 0  # 记录进入网络的车辆数
-        self.arrived_count = 0  # 记录离开网络的车辆数
-        self.traffic_flow_history = []  # 用于记录历史的车流量数据
+        self.total_departed_count  = 0  # 记录进入网络的车辆数
+        self.total_arrived_count = 0  # 记录离开网络的车辆数
+        # self.traffic_flow_history = []  # 用于记录历史的车流量数据
         
+        #新增，记录每个路口按方向的等待时间分布
+        self.all_waiting_time_histograms = {JuncID: {kw: [] for kw in self.keywords_order} for JuncID in all_junction_list}
+
         self.init_env()
         self.previous_global_waiting = dict()
         self.global_obs = dict()
 
         for JuncID in self.junction_list:
-            self.previous_global_waiting[JuncID] = dict()
-            self.global_obs[JuncID] = 0
+            self.previous_global_waiting[JuncID] = dict() # 与global reward和conflict mechanism相关
+            self.global_obs[JuncID] = 0 # global_obs实际上即为global reward的值，但paper中并未采用global reward，只用了ego_reward
             for keyword in self.keywords_order:
                 self.previous_global_waiting[JuncID][keyword] = 0
                 self.previous_global_waiting[JuncID]['sum'] = 0
@@ -76,7 +101,7 @@ class Env(MultiAgentEnv):
         ## ego_only, wait_only, PN_ego
         # self.reward_mode = 'ego_only'
         # self.reward_mode = 'PN_ego'
-        self.reward_mode = 'wait_only'
+        # self.reward_mode = 'wait_only'
         self.observation_space = Box(
             low=-1,
             high=1,
@@ -342,6 +367,7 @@ class Env(MultiAgentEnv):
         if not total_veh_control_queue:
             ## avoid empty queue at the beginning
             total_veh_control_queue = 1
+
         if action == 1:
             egoreward = waiting_lst[0]
         else:
@@ -429,6 +455,7 @@ class Env(MultiAgentEnv):
                 ## 已有记录的车：如果车辆之前经过了其他路口，则减去先前路口的等待时间，从而得到当前路口的等待时间
                 JuncID, keyword = self.map.get_veh_moving_direction(veh)
                 accumulating_waiting = veh.wait_time
+
                 if len(JuncID) > 0:
                     if veh.id not in self.veh_waiting_juncs.keys(): #如果车辆在当前路口还没有等待时间记录
                         self.veh_waiting_juncs[veh.id] = dict()
@@ -451,6 +478,11 @@ class Env(MultiAgentEnv):
                     if veh.type == 'RL':
                         self.control_queue[JuncID][keyword].extend([veh])
                         self.control_queue_waiting_time[JuncID][keyword].extend([self.veh_waiting_juncs[veh.id][JuncID]])
+
+                    # 新增：记录每个路口的等待时间分布（直方图）
+                    if JuncID not in self.all_waiting_time_histograms:
+                        self.all_waiting_time_histograms[JuncID] = {kw: [] for kw in self.keywords_order}
+                    self.all_waiting_time_histograms[JuncID][keyword].extend([self.veh_waiting_juncs[veh.id][JuncID]])
                     
         ## update previous global waiting for next step reward calculation
         for JuncID in self.junction_list:
@@ -486,6 +518,12 @@ class Env(MultiAgentEnv):
             print('error!! action dict is invalid')
             return dict()
         
+        # 初始化路口流量统计结构
+        if not hasattr(self, "intersection_traffic_counts"):
+            self.intersection_traffic_counts = {junc: 0 for junc in all_junction_list}
+        if not hasattr(self, "vehicle_history"):
+            self.vehicle_history = {}  # 记录每辆车经过的路口
+
         # execute action in the sumo env
         for virtual_id in action.keys():
             veh_id = self.convert_virtual_id_to_real_id(virtual_id)
@@ -500,16 +538,37 @@ class Env(MultiAgentEnv):
             elif action[virtual_id] == 0:
                 self.sumo_interface.accl_control(self.rl_vehicles[veh_id], self.soft_deceleration(self.rl_vehicles[veh_id]))
 
-        #sumo step
+        # sumo step
         self.sumo_interface.step() # self.tc.simulationStep()
 
-        # 获取进入和离开网络的车辆数量
-        self.departed_count = len(self.sumo_interface.tc.simulation.getDepartedIDList())
-        self.arrived_count = len(self.sumo_interface.tc.simulation.getArrivedIDList())
+        # 获取当前所有车辆的位置信息
+        all_vehicle_ids = self.sumo_interface.tc.vehicle.getIDList()
+        for veh_id in all_vehicle_ids:
+            # 获取车辆当前所在的 edge 和 lane
+            current_edge = self.sumo_interface.tc.vehicle.getRoadID(veh_id)
 
-        # 记录当前时间步的车流量
-        current_traffic_flow = self.departed_count + self.arrived_count
-        self.traffic_flow_history.append(current_traffic_flow)
+            # 判断是否在路口
+            if current_edge.startswith(":"):  # ":" 前缀表示路口的内部 edge
+                # 提取路口 ID
+                junc_id = current_edge.split(":")[1]
+
+                # 初始化车辆历史
+                if veh_id not in self.vehicle_history:
+                    self.vehicle_history[veh_id] = set()
+
+                # 如果车辆尚未被记录经过该路口，更新流量计数
+                if junc_id not in self.vehicle_history[veh_id]:
+                    self.vehicle_history[veh_id].add(junc_id)
+                    if junc_id in self.intersection_traffic_counts:
+                        self.intersection_traffic_counts[junc_id] += 1
+
+        # 使用 SUMO API 获取当前步进入和离开网络的车辆数量
+        current_departed = self.sumo_interface.tc.simulation.getDepartedNumber()
+        current_arrived = self.sumo_interface.tc.simulation.getArrivedNumber()
+
+        # 更新累计统计数据
+        self.total_departed_count += current_departed
+        self.total_arrived_count += current_arrived
 
         # gathering states from sumo 
         sim_res = self.sumo_interface.get_sim_info()
@@ -658,9 +717,6 @@ class Env(MultiAgentEnv):
         #     new_obs = {}
         #     while len(new_obs)==0:
         #         new_obs, new_rewards, new_dones, new_truncated, new_infos = self.step_once()
-        #         infos["departed_count"] += new_infos["departed_count"]
-        #         infos["arrived_count"] += new_infos["arrived_count"]
-
         #     for id in new_obs.keys():
         #         obs[id] = new_obs[id]
         #         dones[id] = new_dones[id]
