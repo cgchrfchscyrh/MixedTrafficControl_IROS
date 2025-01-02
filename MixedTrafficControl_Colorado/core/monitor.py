@@ -23,8 +23,8 @@ all_junction_list = ['cluster12203246695_12203246696_430572036_442436239',
 
 class DataMonitor(object):
     def __init__(self, env) -> None:
-        # self.junction_list = env.junction_list
-        self.junction_list = all_junction_list
+        self.junction_list = env.junction_list
+        # self.junction_list = all_junction_list
         self.keywords_order = env.keywords_order
         self.clear_data()
 
@@ -34,7 +34,8 @@ class DataMonitor(object):
 
     def conduct_traj_recorder(self):
         self.traj_record = dict()
-        for JuncID in self.junction_list:
+        # for JuncID in self.junction_list:
+        for JuncID in all_junction_list:
             self.traj_record[JuncID] = dict()
             for Keyword in self.keywords_order:
                 self.traj_record[JuncID][Keyword] = dict()
@@ -44,10 +45,18 @@ class DataMonitor(object):
     def conduct_data_recorder(self):
         self.data_record = dict()
         self.conflict_rate = []
-        initial_size = 5000  # 5000 --> 10000 初始化更大的数组
+        initial_size = 5000
+
+        for JuncID in all_junction_list:
+            self.data_record[JuncID] = dict()
+            for Keyword in self.keywords_order:
+                self.data_record[JuncID][Keyword] = dict()
+                self.data_record[JuncID][Keyword]['queue_wait'] = np.zeros(initial_size)
+                self.data_record[JuncID][Keyword]['queue_length'] = np.zeros(initial_size)
+
         for JuncID in self.junction_list:
             self.data_record[JuncID] = dict()
-            for Keyword in self.keywords_order :
+            for Keyword in self.keywords_order:
                 self.data_record[JuncID][Keyword] = dict()
                 self.data_record[JuncID][Keyword]['t'] = [i for i in range(initial_size)]
                 self.data_record[JuncID][Keyword]['queue_wait'] = np.zeros(initial_size)
@@ -62,10 +71,16 @@ class DataMonitor(object):
 
     def step(self, env):
         t = env.env_step
-        for JuncID in self.junction_list:
+
+        for JuncID in all_junction_list:
             for Keyword in self.keywords_order:
                 self.data_record[JuncID][Keyword]['queue_length'][t] = env.get_queue_len(JuncID, Keyword, 'all')
                 self.data_record[JuncID][Keyword]['queue_wait'][t] = env.get_avg_wait_time(JuncID, Keyword, 'all')
+
+        for JuncID in self.junction_list:
+            for Keyword in self.keywords_order:
+                # self.data_record[JuncID][Keyword]['queue_length'][t] = env.get_queue_len(JuncID, Keyword, 'all')
+                # self.data_record[JuncID][Keyword]['queue_wait'][t] = env.get_avg_wait_time(JuncID, Keyword, 'all')
                 self.data_record[JuncID][Keyword]['control_queue_length'][t] = env.get_queue_len(JuncID, Keyword, 'rv')
                 self.data_record[JuncID][Keyword]['control_queue_wait'][t] = env.get_avg_wait_time(JuncID, Keyword, 'rv')
                 self.data_record[JuncID][Keyword]['throughput'][t] = len(env.inner_lane_newly_enter[JuncID][Keyword])
@@ -91,11 +106,11 @@ class DataMonitor(object):
         intersection_throughput = {}  # 每个路口的车流量统计
 
         # 初始化每个路口的统计数据
-        for JuncID in self.junction_list:
+        for JuncID in all_junction_list:
             intersection_throughput[JuncID] = 0
 
         # 遍历每个路口并统计数据
-        for JuncID in self.junction_list:
+        for JuncID in all_junction_list:
             junction_wait = []  # 当前路口的等待时间
 
             for keyword in self.keywords_order:
