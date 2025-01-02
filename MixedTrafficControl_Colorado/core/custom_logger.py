@@ -27,6 +27,10 @@ class CustomLoggerCallback(DefaultCallbacks):
             env_index = None,
             **kwargs,
         ):
+        env = worker.env
+        env.total_departed_count = 0  # 重置进入车辆统计
+        env.total_arrived_count = 0  # 重置离开车辆统计
+        
         episode.user_data["conflict_rate"] = []
         episode.user_data["avg_wait"] = []
         # episode.user_data["traffic_flow_rate"] = []  # 新增车流量列表
@@ -43,12 +47,6 @@ class CustomLoggerCallback(DefaultCallbacks):
             env_index= None,
             **kwargs,
         ):
-        # # 访问 env 的 traffic_flow_history
-        # if hasattr(worker.env, "traffic_flow_history") and worker.env.traffic_flow_history:
-        #     # 获取最新的车流量
-        #     current_traffic_flow = worker.env.traffic_flow_history[-1]
-        #     # 存储到 episode.user_data 中
-        #     episode.user_data["traffic_flow_rate"].append(current_traffic_flow)
 
         # 检查是否有车辆流量数据
         if hasattr(worker.env, "total_departed_count") and hasattr(worker.env, "total_arrived_count"):
@@ -83,14 +81,15 @@ class CustomLoggerCallback(DefaultCallbacks):
         # 添加为 custom metrics
         episode.custom_metrics["episode_departed"] = total_departed
         episode.custom_metrics["episode_arrived"] = total_arrived
-
-        # 打印调试信息（可选）
-        print(f"Episode {episode.episode_id} ended: Departed={total_departed}, Arrived={total_arrived}")
-        # # 计算平均车流量
-        # if episode.user_data["traffic_flow_rate"]:
-        #     episode.custom_metrics["traffic_flow_rate"] = np.mean(episode.user_data["traffic_flow_rate"])
-        # else:
-        #     episode.custom_metrics["traffic_flow_rate"] = 0  # 防止无数据
+        
+        # 获取等待时间直方图数据
+        if hasattr(worker.env, "all_waiting_time_histograms"):
+            all_histograms = worker.env.all_waiting_time_histograms
+            # 添加直方图数据到 episode.hist_data
+            for junc_id, hist_data in all_histograms.items():
+                for keyword, waiting_times in hist_data.items():
+                    hist_key = f"waiting_time_histogram_{junc_id}_{keyword}"
+                    episode.hist_data[hist_key] = waiting_times
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
