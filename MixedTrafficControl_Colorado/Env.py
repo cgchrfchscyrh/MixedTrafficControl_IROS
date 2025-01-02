@@ -19,6 +19,7 @@ CYAN = (0, 255, 255)
 RED = (255, 0, 0)
 EPSILON = 0.00001
 
+## For colorado.net.xml without roundabouts/one-way streets
 all_junction_list = ['cluster12203246695_12203246696_430572036_442436239', 
                        'cluster_547498658_547498666_547498756_547498762_#8more', 
                        'cluster_2052409830_2052409981_9356276530_9356276531', 
@@ -63,8 +64,8 @@ class Env(MultiAgentEnv):
         self.default_rl_prob = config['probablity_RL']
         self.rl_prob_list = config['rl_prob_range'] if 'rl_prob_range' in config.keys() else None
 
-        self.start_edges = start_edges
-        self.end_edges = end_edges
+        # self.start_edges = start_edges
+        # self.end_edges = end_edges
 
         self.max_acc = 100
         self.min_acc = -100
@@ -78,15 +79,15 @@ class Env(MultiAgentEnv):
         # self.traffic_flow_history = []  # 用于记录历史的车流量数据
         
         #新增，记录每个路口按方向的等待时间分布
-        self.waiting_time_histograms = {JuncID: {kw: [] for kw in self.keywords_order} for JuncID in all_junction_list}
+        self.all_waiting_time_histograms = {JuncID: {kw: [] for kw in self.keywords_order} for JuncID in all_junction_list}
 
         self.init_env()
         self.previous_global_waiting = dict()
         self.global_obs = dict()
 
         for JuncID in self.junction_list:
-            self.previous_global_waiting[JuncID] = dict()
-            self.global_obs[JuncID] = 0
+            self.previous_global_waiting[JuncID] = dict() # 与global reward和conflict mechanism相关
+            self.global_obs[JuncID] = 0 # global_obs实际上即为global reward的值，但paper中并未采用global reward，只用了ego_reward
             for keyword in self.keywords_order:
                 self.previous_global_waiting[JuncID][keyword] = 0
                 self.previous_global_waiting[JuncID]['sum'] = 0
@@ -100,7 +101,7 @@ class Env(MultiAgentEnv):
         ## ego_only, wait_only, PN_ego
         # self.reward_mode = 'ego_only'
         # self.reward_mode = 'PN_ego'
-        self.reward_mode = 'wait_only'
+        # self.reward_mode = 'wait_only'
         self.observation_space = Box(
             low=-1,
             high=1,
@@ -366,6 +367,7 @@ class Env(MultiAgentEnv):
         if not total_veh_control_queue:
             ## avoid empty queue at the beginning
             total_veh_control_queue = 1
+
         if action == 1:
             egoreward = waiting_lst[0]
         else:
@@ -478,9 +480,9 @@ class Env(MultiAgentEnv):
                         self.control_queue_waiting_time[JuncID][keyword].extend([self.veh_waiting_juncs[veh.id][JuncID]])
 
                     # 新增：记录每个路口的等待时间分布（直方图）
-                    if JuncID not in self.waiting_time_histograms:
-                        self.waiting_time_histograms[JuncID] = {kw: [] for kw in self.keywords_order}
-                    self.waiting_time_histograms[JuncID][keyword].extend([self.veh_waiting_juncs[veh.id][JuncID]])
+                    if JuncID not in self.all_waiting_time_histograms:
+                        self.all_waiting_time_histograms[JuncID] = {kw: [] for kw in self.keywords_order}
+                    self.all_waiting_time_histograms[JuncID][keyword].extend([self.veh_waiting_juncs[veh.id][JuncID]])
                     
         ## update previous global waiting for next step reward calculation
         for JuncID in self.junction_list:
