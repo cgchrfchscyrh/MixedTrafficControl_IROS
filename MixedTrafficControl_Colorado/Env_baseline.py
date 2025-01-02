@@ -18,7 +18,7 @@ WHITE = (255, 255, 255)
 CYAN = (0, 255, 255)
 RED = (255, 0, 0)
 EPSILON = 0.00001
-
+#test
 ## For colorado.net.xml without roundabouts/one-way streets
 all_junction_list = ['cluster12203246695_12203246696_430572036_442436239', 
                        'cluster_547498658_547498666_547498756_547498762_#8more', 
@@ -79,12 +79,19 @@ class Env(MultiAgentEnv):
         # self.traffic_flow_history = []  # 用于记录历史的车流量数据
         
         #新增，记录每个路口按方向的等待时间分布
-        self.all_waiting_time_histograms = {JuncID: {kw: [] for kw in self.keywords_order} for JuncID in all_junction_list}
+        # self.all_waiting_time_histograms = {JuncID: {kw: [] for kw in self.keywords_order} for JuncID in all_junction_list}
 
         self.init_env()
         self.previous_global_waiting = dict()
+        self.all_previous_global_waiting = dict()
         self.global_obs = dict()
 
+        for JuncID in all_junction_list:
+            self.all_previous_global_waiting[JuncID] = dict()
+            for keyword in self.keywords_order:
+                self.all_previous_global_waiting[JuncID][keyword] = 0
+                self.all_previous_global_waiting[JuncID]['sum'] = 0
+        
         for JuncID in self.junction_list:
             self.previous_global_waiting[JuncID] = dict() # 与global reward和conflict mechanism相关
             self.global_obs[JuncID] = 0 # global_obs实际上即为global reward的值，但paper中并未采用global reward，只用了ego_reward
@@ -488,11 +495,20 @@ class Env(MultiAgentEnv):
                         self.control_queue[JuncID][keyword].extend([veh])
                         self.control_queue_waiting_time[JuncID][keyword].extend([self.veh_waiting_juncs[veh.id][JuncID]])
 
-                    # 新增：记录每个路口的等待时间分布（直方图）
-                    if JuncID not in self.all_waiting_time_histograms:
-                        self.all_waiting_time_histograms[JuncID] = {kw: [] for kw in self.keywords_order}
-                    self.all_waiting_time_histograms[JuncID][keyword].extend([self.veh_waiting_juncs[veh.id][JuncID]])
+                    # # 新增：记录每个路口的等待时间分布（直方图）
+                    # if JuncID not in self.all_waiting_time_histograms:
+                    #     self.all_waiting_time_histograms[JuncID] = {kw: [] for kw in self.keywords_order}
+                    # self.all_waiting_time_histograms[JuncID][keyword].extend([self.veh_waiting_juncs[veh.id][JuncID]])
                     
+        for JuncID in all_junction_list:
+            weighted_sum = 0
+            for Keyword in self.keywords_order:
+                waiting_time = self.get_avg_wait_time(JuncID, Keyword, 'all')
+                self.all_previous_global_waiting[JuncID][Keyword] = waiting_time
+                weighted_sum += waiting_time
+
+            self.all_previous_global_waiting[JuncID]['sum'] = weighted_sum
+
         ## update previous global waiting for next step reward calculation
         for JuncID in self.junction_list:
             weighted_sum = 0

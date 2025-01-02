@@ -3,13 +3,13 @@ import ray #type:ignore
 from ray import air, tune #type:ignore
 from ray.rllib.algorithms.dqn import DQNConfig, DQNTorchPolicy #type:ignore
 from Env import Env
-from ray.rllib.examples.models.shared_weights_model import ( #type:ignore
-    SharedWeightsModel1,
-    SharedWeightsModel2,
-    TF2SharedWeightsModel,
-    TorchSharedWeightsModel,
-)
-from ray.rllib.utils.framework import try_import_tf #type:ignore
+# from ray.rllib.examples.models.shared_weights_model import ( #type:ignore
+#     SharedWeightsModel1,
+#     SharedWeightsModel2,
+#     TF2SharedWeightsModel,
+#     TorchSharedWeightsModel,
+# )
+# from ray.rllib.utils.framework import try_import_tf #type:ignore
 from ray.rllib.utils.test_utils import check_learning_achieved #type:ignore
 from core.custom_logger import CustomLoggerCallback
 import os
