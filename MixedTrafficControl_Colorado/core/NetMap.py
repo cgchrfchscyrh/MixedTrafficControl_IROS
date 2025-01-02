@@ -3,7 +3,12 @@ sys.path.append(os.getcwd())
 from core.utils import map_parser
 from copy import deepcopy
 import math
-    
+from sumolib.net import readNet
+
+def get_all_junctions(net_file):
+    net = readNet(net_file)
+    return [junction.getID() for junction in net.getNodes()]
+   
 class NetMap(object):
     def __init__(self, xml_path, junction_list = []) -> None:
         self.junction_list = junction_list
@@ -409,6 +414,11 @@ class NetMap(object):
                 return []
 
 if __name__ == "__main__":
-    map = NetMap('real_data/CSeditClean_1.net_threelegs.xml', ['229','499','332','334', 'cluster_2059459190_2059459387_423609690_429990307_455858124_5692002934_8446346736', '140'])
-    map._add_recurse_intersection_edge("229357869#5", "229")
-    map.get_facing_intersection('ddd')
+    print("1:", get_all_junctions('sumo_networks/colorado/colorado.net.xml'))
+
+    map = NetMap('sumo_networks/colorado/colorado.net.xml', [])
+   
+    print("junction:", map.junction_data)
+    # map = NetMap('real_data/CSeditClean_1.net_threelegs.xml', ['229','499','332','334', 'cluster_2059459190_2059459387_423609690_429990307_455858124_5692002934_8446346736', '140'])
+    # map._add_recurse_intersection_edge("229357869#5", "229")
+    # map.get_facing_intersection('ddd')
