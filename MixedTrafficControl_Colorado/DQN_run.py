@@ -12,8 +12,11 @@ from ray.rllib.examples.models.shared_weights_model import ( #type:ignore
 from ray.rllib.utils.framework import try_import_tf #type:ignore
 from ray.rllib.utils.test_utils import check_learning_achieved #type:ignore
 from core.custom_logger import CustomLoggerCallback
+import os
+os.environ['RAY_AIR_NEW_OUTPUT'] = '1'
+from ray.tune.experimental.output import AirVerbosity, get_air_verbosity #type:ignore
 
-tf1, tf, tfv = try_import_tf()
+# tf1, tf, tfv = try_import_tf()
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--num-cpus", type=int, default=0)
@@ -149,8 +152,9 @@ if __name__ == "__main__":
             # local_dir='D:\\ray_results',
 
             stop=stop, 
-            verbose=3, 
-            log_to_file=True, 
+            # verbose = 3,
+            verbose = get_air_verbosity(AirVerbosity.DEFAULT), 
+            log_to_file=False, 
             checkpoint_config=air.CheckpointConfig(
                 num_to_keep = 40,
                 checkpoint_frequency = 10)
