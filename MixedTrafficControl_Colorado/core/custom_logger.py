@@ -81,7 +81,7 @@ class CustomLoggerCallback(DefaultCallbacks):
         # 添加为 custom metrics
         episode.custom_metrics["episode_departed"] = total_departed
         episode.custom_metrics["episode_arrived"] = total_arrived
-        
+
         # 获取等待时间直方图数据
         if hasattr(worker.env, "all_waiting_time_histograms"):
             all_histograms = worker.env.all_waiting_time_histograms
@@ -90,6 +90,11 @@ class CustomLoggerCallback(DefaultCallbacks):
                 for keyword, waiting_times in hist_data.items():
                     hist_key = f"waiting_time_histogram_{junc_id}_{keyword}"
                     episode.hist_data[hist_key] = waiting_times
+
+        # 将路口流量数据存储为 histogram custom metric
+        if hasattr(worker.env, "intersection_traffic_counts"):
+            for junc_id, count in worker.env.intersection_traffic_counts.items():
+                episode.custom_metrics[f"throughput_{junc_id}"] = count
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
