@@ -2,7 +2,7 @@ import argparse
 import os, sys
 import random
 sys.path.append(os.getcwd())
-from Env_baseline import Env
+from Env_baseline import Env #type:ignore
 parser = argparse.ArgumentParser()
 
 parser.add_argument(
@@ -36,18 +36,18 @@ if __name__ == "__main__":
 
     ## TODO map xml could be parsed from sumocfg file
     env = Env({
-            "junction_list":['cluster_1021221509_11808122037_11808122038_11808122040_#4more',
-                             'cluster9663732079_J0_J1_J2_#2more',
-                             'cluster_1334947864_1334947865_1334947879_1334947882',
-                             'cluster_2048655723_2048656743_2048656762_2048657045_#8more'],
+            "junction_list":['cluster12203246695_12203246696_430572036_442436239',
+                    'cluster_2052409422_2052409707_542824247_542824770_#2more',
+                    'cluster_2093101229_2093101656_2093101781_2093101915_#8more',
+                    'cluster_439980117_439980118_442435910_442435912'],
             "spawn_rl_prob":{},
             "probablity_RL":0.0,
             # "cfg":'real_data/osm.sumocfg',
-            "cfg":'sumo_networks/colorado/colorado_roundabouts_singleLine.sumocfg',
+            "cfg":'sumo_networks/colorado/colorado.sumocfg',
 
             "render":True,
             # "map_xml":'real_data/CSeditClean_1.net_threelegs.xml',
-            "map_xml":'sumo_networks/colorado/colorado_roundabouts_singleLine.net.xml',
+            "map_xml":'sumo_networks/colorado/colorado.net.xml',
 
             "max_episode_steps":1000,
             "traffic_light_program":{
