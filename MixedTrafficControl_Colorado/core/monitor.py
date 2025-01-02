@@ -75,15 +75,60 @@ class DataMonitor(object):
             [len(env.conflict_vehids)/len(env.previous_action) if len(env.previous_action) else 0]
             )
 
-    def evaluate(self, min_step = 500, max_step = 1000):
-        total_wait = []
+    # def evaluate(self, min_step = 500, max_step = 1000):
+    #     total_wait = []
+    #     for JuncID in self.junction_list:
+    #         for keyword in self.keywords_order:
+    #             avg_wait = np.mean(self.data_record[JuncID][keyword]['queue_wait'][min_step:max_step])
+    #             total_wait.extend([avg_wait])
+    #             print("Avg waiting time at" + JuncID +" "+keyword+": "+str(avg_wait))
+    #         print("Total avg wait time at junction "+JuncID+": " +str(np.mean(total_wait)))
+
+    def evaluate(self, min_step=500, max_step=1000):
+        # 初始化统计变量
+        total_wait = []  # 所有车辆的等待时间
+        total_arrivals = 0  # 到达目的地的总车辆数
+        intersection_throughput = {}  # 每个路口的车流量统计
+
+        # 初始化每个路口的统计数据
         for JuncID in self.junction_list:
+            intersection_throughput[JuncID] = 0
+
+        # 遍历每个路口并统计数据
+        for JuncID in self.junction_list:
+            junction_wait = []  # 当前路口的等待时间
+
             for keyword in self.keywords_order:
+                # 计算当前路口和方向的平均等待时间
                 avg_wait = np.mean(self.data_record[JuncID][keyword]['queue_wait'][min_step:max_step])
-                total_wait.extend([avg_wait])
-                print("Avg waiting time at" + JuncID +" "+keyword+": "+str(avg_wait))
-            print("Total avg wait time at junction "+JuncID+": " +str(np.mean(total_wait)))
-        
+                junction_wait.append(avg_wait)
+
+                # 累加车流量
+                throughput = sum(self.data_record[JuncID][keyword]['throughput'][min_step:max_step])
+                intersection_throughput[JuncID] += throughput
+
+                # 打印每个方向的等待时间
+                print(f"Avg waiting time at {JuncID} {keyword}: {avg_wait:.2f}")
+
+            # 累计所有路口的总数据
+            total_wait.extend(junction_wait)
+
+            # 打印当前路口的总平均等待时间
+            print(f"Total avg wait time at junction {JuncID}: {np.mean(junction_wait):.2f}")
+
+        # 统计总到达车辆数量
+        total_arrivals = sum(intersection_throughput.values())
+
+        # 打印整个网络的统计结果
+        print("\n--- Network Statistics ---")
+        print(f"Total Avg Wait Time: {np.mean(total_wait):.2f}")
+        print(f"Total Arrivals: {total_arrivals}")
+
+        # 打印每个路口的车流量
+        print("\n--- Per Intersection Throughput ---")
+        for JuncID, throughput in intersection_throughput.items():
+            print(f"Intersection {JuncID} - Traffic Throughput: {throughput}")
+
     def eval_traffic_flow(self, JuncID, time_range):
         inflow_intersection = []
         for t in range(time_range[0], time_range[1]):
