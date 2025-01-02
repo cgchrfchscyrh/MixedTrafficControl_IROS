@@ -518,6 +518,12 @@ class Env(MultiAgentEnv):
             print('error!! action dict is invalid')
             return dict()
         
+        # 初始化路口流量统计结构
+        if not hasattr(self, "intersection_traffic_counts"):
+            self.intersection_traffic_counts = {junc: 0 for junc in all_junction_list}
+        if not hasattr(self, "vehicle_history"):
+            self.vehicle_history = {}  # 记录每辆车经过的路口
+
         # execute action in the sumo env
         for virtual_id in action.keys():
             veh_id = self.convert_virtual_id_to_real_id(virtual_id)
@@ -532,14 +538,29 @@ class Env(MultiAgentEnv):
             elif action[virtual_id] == 0:
                 self.sumo_interface.accl_control(self.rl_vehicles[veh_id], self.soft_deceleration(self.rl_vehicles[veh_id]))
 
-        #sumo step
+        # sumo step
         self.sumo_interface.step() # self.tc.simulationStep()
 
-        # 获取进入和离开网络的车辆数量
-        # self.departed_count = len(self.sumo_interface.tc.simulation.getDepartedIDList())
-        # self.arrived_count = len(self.sumo_interface.tc.simulation.getArrivedIDList())
-        # current_departed = len(self.sumo_interface.tc.simulation.getDepartedIDList())
-        # current_arrived = len(self.sumo_interface.tc.simulation.getArrivedIDList())
+        # 获取当前所有车辆的位置信息
+        all_vehicle_ids = self.sumo_interface.tc.vehicle.getIDList()
+        for veh_id in all_vehicle_ids:
+            # 获取车辆当前所在的 edge 和 lane
+            current_edge = self.sumo_interface.tc.vehicle.getRoadID(veh_id)
+
+            # 判断是否在路口
+            if current_edge.startswith(":"):  # ":" 前缀表示路口的内部 edge
+                # 提取路口 ID
+                junc_id = current_edge.split(":")[1]
+
+                # 初始化车辆历史
+                if veh_id not in self.vehicle_history:
+                    self.vehicle_history[veh_id] = set()
+
+                # 如果车辆尚未被记录经过该路口，更新流量计数
+                if junc_id not in self.vehicle_history[veh_id]:
+                    self.vehicle_history[veh_id].add(junc_id)
+                    if junc_id in self.intersection_traffic_counts:
+                        self.intersection_traffic_counts[junc_id] += 1
 
         # 使用 SUMO API 获取当前步进入和离开网络的车辆数量
         current_departed = self.sumo_interface.tc.simulation.getDepartedNumber()
@@ -548,10 +569,6 @@ class Env(MultiAgentEnv):
         # 更新累计统计数据
         self.total_departed_count += current_departed
         self.total_arrived_count += current_arrived
-
-        # # 记录当前时间步的车流量
-        # current_traffic_flow = self.departed_count + self.arrived_count
-        # self.traffic_flow_history.append(current_traffic_flow)
 
         # gathering states from sumo 
         sim_res = self.sumo_interface.get_sim_info()
