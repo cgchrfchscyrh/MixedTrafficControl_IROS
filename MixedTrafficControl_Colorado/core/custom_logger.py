@@ -111,13 +111,13 @@ class CustomLoggerCallback(DefaultCallbacks):
         episode.custom_metrics["episode_arrived"] = total_arrived
 
         # 记录每个路口的平均等待时间
-        if "junction_wait_times" in episode.user_data:
-            for JuncID in all_junction_list:
-                if JuncID in episode.user_data["junction_wait_times"]:
-                    avg_junction_wait = np.mean(episode.user_data["junction_wait_times"][JuncID])
-                    metric_name = f"avg_wait_{JuncID}"  # 自定义每个路口的metric名称
-                    episode.custom_metrics[metric_name] = avg_junction_wait
-                    
+        # if "junction_wait_times" in episode.user_data:
+        for JuncID in all_junction_list:
+            # if JuncID in episode.user_data["junction_wait_times"]:
+            avg_junction_wait = np.mean(episode.user_data["junction_wait_times"][JuncID])
+            metric_name = f"avg_wait_{JuncID}"  # 自定义每个路口的metric名称
+            episode.custom_metrics[metric_name] = avg_junction_wait
+
         # # 获取等待时间直方图数据
         # if hasattr(worker.env, "all_waiting_time_histograms"):
         #     all_histograms = worker.env.all_waiting_time_histograms
@@ -128,9 +128,9 @@ class CustomLoggerCallback(DefaultCallbacks):
         #             episode.hist_data[hist_key] = waiting_times
 
         # 将路口流量数据存储为 histogram custom metric
-        if hasattr(worker.env, "intersection_traffic_counts"):
-            for junc_id, count in worker.env.intersection_traffic_counts.items():
-                episode.custom_metrics[f"throughput_{junc_id}"] = count
+        # if hasattr(worker.env, "intersection_traffic_counts"):
+        for junc_id, count in worker.env.intersection_traffic_counts.items():
+            episode.custom_metrics[f"throughput_{junc_id}"] = count
 
 # if __name__ == "__main__":
 #     parser = argparse.ArgumentParser()
