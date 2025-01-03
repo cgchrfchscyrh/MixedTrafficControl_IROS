@@ -107,11 +107,9 @@ class CustomLoggerCallback(DefaultCallbacks):
         episode.custom_metrics["conflict_rate"] = np.mean(episode.user_data["conflict_rate"])
         episode.custom_metrics["avg_wait"] = np.mean(episode.user_data["avg_wait"])
 
-        # 获取当前 episode 的统计
         total_departed = worker.env.total_departed_count
         total_arrived = worker.env.total_arrived_count
 
-        # 添加为 custom metrics
         episode.custom_metrics["episode_departed"] = total_departed
         episode.custom_metrics["episode_arrived"] = total_arrived
 
@@ -131,13 +129,13 @@ class CustomLoggerCallback(DefaultCallbacks):
 
         # 将路口流量数据存储为 histogram custom metric
         # if hasattr(worker.env, "intersection_traffic_counts"):
-        # for junc_id, count in worker.env.intersection_traffic_counts.items():
-        #     episode.custom_metrics[f"throughput_{junc_id}"] = count
+        for junc_id, count in worker.env.intersection_traffic_counts.items():
+            episode.custom_metrics[f"throughput_{junc_id}"] = count
 
         # 遍历每个路口，记录交通流量
-        for JuncID, throughput in worker.env.junction_traffic_throughput.items():
-            metric_name = f"TP_{JuncID}"
-            episode.custom_metrics[metric_name] = throughput
+        # for JuncID, throughput in worker.env.junction_traffic_throughput.items():
+        #     metric_name = f"TP_{JuncID}"
+        #     episode.custom_metrics[metric_name] = throughput
 
 # if __name__ == "__main__":
 #     parser = argparse.ArgumentParser()
