@@ -18,7 +18,7 @@ WHITE = (255, 255, 255)
 CYAN = (0, 255, 255)
 RED = (255, 0, 0)
 EPSILON = 0.00001
-#test
+
 ## For colorado.net.xml without roundabouts/one-way streets
 all_junction_list = ['cluster12203246695_12203246696_430572036_442436239', 
                        'cluster_547498658_547498666_547498756_547498762_#8more', 
@@ -45,7 +45,7 @@ class Env(MultiAgentEnv):
 
         super().__init__()
         self.config = config
-        self.print_debug = True #False
+        self.print_debug = False
         self.cfg = config['cfg']
         self.map_xml = config['map_xml']
         self.keywords_order = ['topstraight', 'topleft','rightstraight', 'rightleft','bottomstraight', 'bottomleft', 'leftstraight', 'leftleft']
@@ -603,7 +603,7 @@ class Env(MultiAgentEnv):
                     self.vehicle_history[veh] = set()
 
                 # 如果车辆尚未被记录经过该路口，更新流量计数
-                if junc_id not in self.vehicle_history[veh]:
+                if junc_id in all_junction_list and junc_id not in self.vehicle_history[veh]:
                     self.vehicle_history[veh].add(junc_id)
 
                     # 确保路口计数器初始化
