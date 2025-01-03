@@ -81,6 +81,8 @@ class Env(MultiAgentEnv):
         #新增，记录每个路口按方向的等待时间分布
         # self.all_waiting_time_histograms = {JuncID: {kw: [] for kw in self.keywords_order} for JuncID in all_junction_list}
 
+        self.junction_waiting_histograms = {junc: [] for junc in all_junction_list}
+
         # self.junction_traffic_throughput = {JuncID: 0 for JuncID in all_junction_list}
         self.all_junction_outgoing_edges = {}  # 存储每个路口的出边
         self.junction_traffic_counts = {junc: 0 for junc in all_junction_list}
@@ -533,6 +535,8 @@ class Env(MultiAgentEnv):
                     if veh.id not in self.veh_waiting_juncs.keys(): #该车辆尚未进入过任何路口
                         self.veh_waiting_juncs[veh.id] = dict()
                         self.veh_waiting_juncs[veh.id][JuncID] = accumulating_waiting
+                        # 更新直方图数据
+                        self.junction_waiting_histograms[JuncID].append(accumulating_waiting)
                     else:
                         prev_wtm = 0 #存储车辆在其他路口的等待时间
                         for prev_JuncID in self.veh_waiting_juncs[veh.id].keys(): #遍历该车辆在veh_waiting_juncs中的所有已记录路口ID（prev_JuncID）
@@ -541,8 +545,11 @@ class Env(MultiAgentEnv):
                         if accumulating_waiting - prev_wtm >= 0:
                             #当前累计等待时间比之前路口的等待时间总和更大，说明车辆在当前路口确实有等待时间
                             self.veh_waiting_juncs[veh.id][JuncID] = accumulating_waiting - prev_wtm
+                            # 更新直方图数据
+                            self.junction_waiting_histograms[JuncID].append(accumulating_waiting - prev_wtm)
                         else:
                             self.veh_waiting_juncs[veh.id][JuncID] = accumulating_waiting
+                            self.junction_waiting_histograms[JuncID].append(accumulating_waiting)
             
                 ## updating control queue and waiting time of queue
                 if self.map.get_distance_to_intersection(veh)<=self.control_zone_length:
