@@ -118,14 +118,16 @@ class CustomLoggerCallback(DefaultCallbacks):
             metric_name = f"avg_wait_{JuncID}"  # 自定义每个路口的metric名称
             episode.custom_metrics[metric_name] = np.mean(episode.user_data[metric_name])
 
-        # # 获取等待时间直方图数据
-        # if hasattr(worker.env, "all_waiting_time_histograms"):
-        #     all_histograms = worker.env.all_waiting_time_histograms
-        #     # 添加直方图数据到 episode.hist_data
-        #     for junc_id, hist_data in all_histograms.items():
-        #         for keyword, waiting_times in hist_data.items():
-        #             hist_key = f"waiting_time_histogram_{junc_id}_{keyword}"
-        #             episode.hist_data[hist_key] = waiting_times
+        for JuncID in worker.env.junction_waiting_histograms.keys():
+            # 添加直方图数据
+            metric_name = f"WT_{JuncID}"
+            histogram, _ = np.histogram(
+            worker.env.junction_waiting_histograms[JuncID], bins=20, range=(0, 1000)
+            )
+            episode.custom_metrics[metric_name] = histogram.tolist()  # 转换为列表记录
+            # episode.custom_metrics[metric_name] = np.histogram(
+            #     worker.env.junction_waiting_histograms[JuncID], bins=10
+            # )[0].tolist()  # 将直方图转换为可记录的列表
 
         # 将路口流量数据存储为 histogram custom metric
         # if hasattr(worker.env, "intersection_traffic_counts"):
