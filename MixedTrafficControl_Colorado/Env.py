@@ -594,7 +594,7 @@ class Env(MultiAgentEnv):
                 # 提取路口 ID
                 junc_id = road_id[1:].split('_')[0]  # 去掉 ":" 并提取路口 ID
 
-                if one_vehicle:
+                if self.print_debug and one_vehicle:
                     print("veh:", veh, " road_id:", road_id, " junc_id:", junc_id)
                     one_vehicle = False
 
