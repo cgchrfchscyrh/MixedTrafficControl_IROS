@@ -81,6 +81,8 @@ class Env(MultiAgentEnv):
         #新增，记录每个路口按方向的等待时间分布
         # self.all_waiting_time_histograms = {JuncID: {kw: [] for kw in self.keywords_order} for JuncID in all_junction_list}
 
+        self.junction_traffic_throughput = {JuncID: 0 for JuncID in all_junction_list}
+
         self.init_env()
         self.previous_global_waiting = dict()
         self.all_previous_global_waiting = dict()
@@ -475,6 +477,11 @@ class Env(MultiAgentEnv):
                     if veh.id not in self.veh_waiting_juncs.keys(): #如果车辆在当前路口还没有等待时间记录
                         self.veh_waiting_juncs[veh.id] = dict()
                         self.veh_waiting_juncs[veh.id][JuncID] = accumulating_waiting
+
+                        # 更新车流量统计
+                        if JuncID not in self.junction_traffic_throughput:
+                            self.junction_traffic_throughput[JuncID] = 0
+                        self.junction_traffic_throughput[JuncID] += 1
                     else:
                         prev_wtm = 0 #存储车辆在其他路口的等待时间
                         for prev_JuncID in self.veh_waiting_juncs[veh.id].keys(): #遍历该车辆在veh_waiting_juncs中的所有已记录路口ID（prev_JuncID）
@@ -485,6 +492,12 @@ class Env(MultiAgentEnv):
                             self.veh_waiting_juncs[veh.id][JuncID] = accumulating_waiting - prev_wtm
                         else:
                             self.veh_waiting_juncs[veh.id][JuncID] = accumulating_waiting
+
+                        # 更新车流量统计
+                        if JuncID not in self.junction_traffic_throughput:
+                            self.junction_traffic_throughput[JuncID] = 0
+                        if JuncID not in self.veh_waiting_juncs[veh.id]:
+                            self.junction_traffic_throughput[JuncID] += 1  # 如果车辆是第一次被记录经过该路口
             
                 ## updating control queue and waiting time of queue
                 if self.map.get_distance_to_intersection(veh)<=self.control_zone_length:
