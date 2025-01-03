@@ -82,6 +82,8 @@ class Env(MultiAgentEnv):
         # self.all_waiting_time_histograms = {JuncID: {kw: [] for kw in self.keywords_order} for JuncID in all_junction_list}
 
         self.junction_traffic_throughput = {JuncID: 0 for JuncID in all_junction_list}
+        self.intersection_traffic_counts = {junc: 0 for junc in all_junction_list}
+        self.vehicle_history = {}  # 记录每辆车经过的路口
 
         self.init_env()
         self.previous_global_waiting = dict()
@@ -555,12 +557,6 @@ class Env(MultiAgentEnv):
         if not (isinstance(action, dict) and len(action) == len(self.previous_obs)- sum(dict_tolist(self.previous_dones))):
             print('error!! action dict is invalid')
             return dict()
-        
-        # 初始化路口流量统计结构
-        if not hasattr(self, "intersection_traffic_counts"):
-            self.intersection_traffic_counts = {junc: 0 for junc in all_junction_list}
-        if not hasattr(self, "vehicle_history"):
-            self.vehicle_history = {}  # 记录每辆车经过的路口
 
         # execute action in the sumo env
         for virtual_id in action.keys():
