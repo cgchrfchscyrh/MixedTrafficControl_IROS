@@ -152,7 +152,7 @@ if __name__ == "__main__":
             # local_dir='D:\\ray_results',
 
             stop=stop, 
-            verbose = 3,
+            verbose = 2,
             # verbose = get_air_verbosity(AirVerbosity.DEFAULT), 
             log_to_file=False, 
             checkpoint_config=air.CheckpointConfig(
