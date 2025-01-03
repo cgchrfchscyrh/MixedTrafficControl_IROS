@@ -45,7 +45,7 @@ class Env(MultiAgentEnv):
 
         super().__init__()
         self.config = config
-        self.print_debug = False
+        self.print_debug = True
         self.cfg = config['cfg']
         self.map_xml = config['map_xml']
         self.keywords_order = ['topstraight', 'topleft','rightstraight', 'rightleft','bottomstraight', 'bottomleft', 'leftstraight', 'leftleft']
