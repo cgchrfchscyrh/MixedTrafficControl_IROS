@@ -108,6 +108,7 @@ if __name__ == "__main__":
 
             # "rl_prob_range": [i*0.1 for i in range(5, 10)], # change RV penetration rate when reset
             "max_episode_steps":1000, #1000
+            "log_sys_usage": True,
             "conflict_mechanism":'flexible',
             "traffic_light_program":{
                 "disable_state":'G',
