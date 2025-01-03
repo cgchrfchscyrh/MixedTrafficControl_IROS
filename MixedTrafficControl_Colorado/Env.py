@@ -212,7 +212,7 @@ class Env(MultiAgentEnv):
         ## data monitor
         self.monitor = DataMonitor(self)
 
-        self._print_debug('init_env')
+        # self._print_debug('init_env')
 
     def get_avg_wait_time(self, JuncID, Keyword, mode = 'all'):
         ## mode = all, rv
@@ -549,7 +549,7 @@ class Env(MultiAgentEnv):
             self.previous_global_waiting[JuncID]['sum'] = weighted_sum
 
     def step_once(self, action={}):
-        self._print_debug('step')
+        # self._print_debug('step')
         self.new_departed = set()
         self.sumo_interface.set_max_speed_all(10)
         self._traffic_light_program_update()
@@ -591,8 +591,8 @@ class Env(MultiAgentEnv):
                 if junc_id in all_junction_list:
                     if self.print_debug and one_vehicle:
                         print("veh:", veh, " road_id:", road_id, " junc_id:", junc_id)
-                        print("counts:", self.intersection_traffic_counts)
-                        one_vehicle = False
+                        # print("counts:", self.intersection_traffic_counts)
+                        # one_vehicle = False
 
                     # 初始化车辆历史
                     if veh not in self.vehicle_history:
@@ -646,7 +646,7 @@ class Env(MultiAgentEnv):
                 self.rl_vehicles.pop(veh.id)
             self.vehicles.pop(veh.id)
 
-        self._print_debug('before updating vehicles')
+        # self._print_debug('before updating vehicles')
         # update vehicles' info for Env
         for veh_id, veh in self.vehicles.items():
             veh.prev_speed = veh.get('speed', None)
@@ -740,9 +740,9 @@ class Env(MultiAgentEnv):
         self.monitor.step(self)
 
         self.conflict_vehids=[]
-        self._print_debug('finish process step')
-        if len(dict_tolist(rewards))>0 and self.print_debug:
-            print('avg reward: '+str(np.array(dict_tolist(rewards)).mean())+' max reward: '+str(np.array(dict_tolist(rewards)).max())+' min reward: '+str(np.array(dict_tolist(rewards)).min()))
+        # self._print_debug('finish process step')
+        # if len(dict_tolist(rewards))>0 and self.print_debug:
+        #     print('avg reward: '+str(np.array(dict_tolist(rewards)).mean())+' max reward: '+str(np.array(dict_tolist(rewards)).max())+' min reward: '+str(np.array(dict_tolist(rewards)).min()))
 
         return obs, rewards, dones, truncated, infos
 
@@ -770,7 +770,7 @@ class Env(MultiAgentEnv):
         return obs, rewards, dones, truncated, infos
 
     def reset(self, *, seed=None, options=None):
-        self._print_debug('reset')
+        # self._print_debug('reset')
         # soft reset
         while not self.sumo_interface.reset_sumo():
             pass
@@ -795,7 +795,7 @@ class Env(MultiAgentEnv):
         self.sumo_interface.close()
 
     def action_space_sample(self, agent_ids: list = None):
-        self._print_debug('action sample')
+        # self._print_debug('action sample')
         """Returns a random action for each environment, and potentially each
             agent in that environment.
 
@@ -817,7 +817,7 @@ class Env(MultiAgentEnv):
         }
 
     def observation_space_sample(self, agent_ids: list = None):
-        self._print_debug('obs sample')
+        # self._print_debug('obs sample')
         if agent_ids is None:
             agent_ids = self.get_agent_ids()
         return {
