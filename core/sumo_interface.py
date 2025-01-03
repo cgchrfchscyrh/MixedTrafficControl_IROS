@@ -141,7 +141,6 @@ class SUMO(object):
                 self.tc.trafficlight.setProgram(tl_id, '0')
             self.traffic_light_status = True
 
-
     def set_safety_junction(self):
         pass
 

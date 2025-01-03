@@ -4,7 +4,7 @@ from core.sumo_interface import SUMO
 from core.costomized_data_structures import Vehicle, Container
 from core.NetMap import NetMap
 import numpy as np
-import random, math
+import random, math, traci
 # from gym.spaces.box import Box #type:ignore
 from gymnasium.spaces.box import Box #type:ignore
 
@@ -81,14 +81,19 @@ class Env(MultiAgentEnv):
         #新增，记录每个路口按方向的等待时间分布
         # self.all_waiting_time_histograms = {JuncID: {kw: [] for kw in self.keywords_order} for JuncID in all_junction_list}
 
-        self.junction_traffic_throughput = {JuncID: 0 for JuncID in all_junction_list}
-        self.intersection_traffic_counts = {junc: 0 for junc in all_junction_list}
-        self.vehicle_history = {}  # 记录每辆车经过的路口
+        # self.junction_traffic_throughput = {JuncID: 0 for JuncID in all_junction_list}
+        self.all_junction_outgoing_edges = {}  # 存储每个路口的出边
+        self.junction_traffic_counts = {junc: 0 for junc in all_junction_list}
+        self.vehicle_history = set()  # 记录所有已统计的车辆 ID
 
         self.init_env()
         self.previous_global_waiting = dict()
         self.all_previous_global_waiting = dict()
         self.global_obs = dict()
+
+        # 初始化每个路口的 outgoing edges
+        for junc_id in all_junction_list:
+            self.all_junction_outgoing_edges[junc_id] = traci.junction.getOutgoingEdges(junc_id)
 
         for JuncID in all_junction_list:
             self.all_previous_global_waiting[JuncID] = dict()
@@ -141,6 +146,20 @@ class Env(MultiAgentEnv):
         for veh in self.rl_vehicles:
             rl_veh_ids.extend([veh.id])
         return set(rl_veh_ids)
+    
+    def update_traffic_flow(self):
+        """
+        在每个时间步调用，更新每个路口的车流量
+        """
+        for junc_id, outgoing_edges in self.all_junction_outgoing_edges.items():
+            for edge_id in outgoing_edges:
+                # 获取当前边上的车辆 ID
+                vehicle_ids = traci.edge.getLastStepVehicleIDs(edge_id)
+                for veh_id in vehicle_ids:
+                    # 如果车辆尚未被统计，更新车流量
+                    if veh_id not in self.vehicle_history:
+                        self.vehicle_history.add(veh_id)
+                        self.junction_traffic_counts[junc_id] += 1
 
     def init_env(self):
         ## vehicle level
@@ -450,6 +469,34 @@ class Env(MultiAgentEnv):
                 self.inner_lane_newly_enter[JuncID][keyword] = []
                 self.inner_lane_occmap[JuncID][keyword] = [0 for _ in range(10)]
 
+        # one_vehicle = True
+        # for veh in self.vehicles:
+        #     if len(veh.road_id) == 0:
+        #         continue # 忽略无效车辆信息
+
+        #     if veh.road_id[0] == ':':  # 判断车辆是否在路口内部
+        #         junc_id = veh.road_id[1:].split('_')[0]  # 去掉 ":" 并提取路口 ID
+
+        #         if junc_id in all_junction_list:
+        #             if self.print_debug and one_vehicle:
+        #                 print("veh:", veh, " road_id:", veh.road_id, " junc_id:", junc_id)
+        #                 # print("counts:", self.intersection_traffic_counts)
+        #                 # one_vehicle = False
+
+        #             # 初始化车辆历史
+        #             if veh not in self.vehicle_history:
+        #                 self.vehicle_history[veh] = set()
+
+        #             # 如果车辆尚未被记录经过该路口，更新流量计数
+        #             if junc_id not in self.vehicle_history[veh]:
+        #                 self.vehicle_history[veh].add(junc_id)
+
+        #                 # 确保路口计数器初始化
+        #                 if junc_id not in self.intersection_traffic_counts:
+        #                     self.intersection_traffic_counts[junc_id] = 0
+
+        #                 self.intersection_traffic_counts[junc_id] += 1
+
         for veh in self.vehicles:
             if len(veh.road_id)==0:
                 ## avoid invalid vehicle information
@@ -481,9 +528,9 @@ class Env(MultiAgentEnv):
                         self.veh_waiting_juncs[veh.id][JuncID] = accumulating_waiting
 
                         # 更新车流量统计
-                        if JuncID not in self.junction_traffic_throughput:
-                            self.junction_traffic_throughput[JuncID] = 0
-                        self.junction_traffic_throughput[JuncID] += 1
+                        # if JuncID not in self.junction_traffic_throughput:
+                        #     self.junction_traffic_throughput[JuncID] = 0
+                        # self.junction_traffic_throughput[JuncID] += 1
                     else:
                         prev_wtm = 0 #存储车辆在其他路口的等待时间
                         for prev_JuncID in self.veh_waiting_juncs[veh.id].keys(): #遍历该车辆在veh_waiting_juncs中的所有已记录路口ID（prev_JuncID）
@@ -495,11 +542,11 @@ class Env(MultiAgentEnv):
                         else:
                             self.veh_waiting_juncs[veh.id][JuncID] = accumulating_waiting
 
-                        # 更新车流量统计
-                        if JuncID not in self.junction_traffic_throughput:
-                            self.junction_traffic_throughput[JuncID] = 0
-                        if JuncID not in self.veh_waiting_juncs[veh.id]:
-                            self.junction_traffic_throughput[JuncID] += 1  # 如果车辆是第一次被记录经过该路口
+                        # # 更新车流量统计
+                        # if JuncID not in self.junction_traffic_throughput:
+                        #     self.junction_traffic_throughput[JuncID] = 0
+                        # if JuncID not in self.veh_waiting_juncs[veh.id]:
+                        #     self.junction_traffic_throughput[JuncID] += 1  # 如果车辆是第一次被记录经过该路口
             
                 ## updating control queue and waiting time of queue
                 if self.map.get_distance_to_intersection(veh)<=self.control_zone_length:
@@ -577,36 +624,36 @@ class Env(MultiAgentEnv):
 
         # 获取当前所有车辆的位置信息
         # all_vehicle_ids = self.sumo_interface.tc.vehicle.getIDList()
-        one_vehicle = True
-        for veh in self.vehicles:
-            if len(veh.road_id) == 0:
-                continue # 忽略无效车辆信息
+        # one_vehicle = True
+        # sim_res = self.sumo_interface.get_sim_info()
+        # for veh_id in sim_res.departed_vehicles_ids:
+        #     road_id = self.sumo_interface.get_vehicle_edge(veh_id)
+        #     # print("veh_id:", veh_id, " road_id:", road_id)
+        #     if len(road_id) == 0:
+        #         continue # 忽略无效车辆信息
 
-            # 获取车辆当前所在的 edge 和 lane
-            road_id = veh.road_id
+        #     if road_id[0] == ':':  # 判断车辆是否在路口内部
+        #         junc_id = road_id[1:].split('_')[0]  # 去掉 ":" 并提取路口 ID
 
-            if road_id[0] == ':':  # 判断车辆是否在路口内部
-                junc_id = road_id[1:].split('_')[0]  # 去掉 ":" 并提取路口 ID
+        #         if junc_id in all_junction_list:
+        #             if self.print_debug and one_vehicle:
+        #                 print("veh:", veh_id, " road_id:", road_id, " junc_id:", junc_id)
+        #                 # print("counts:", self.intersection_traffic_counts)
+        #                 # one_vehicle = False
 
-                if junc_id in all_junction_list:
-                    if self.print_debug and one_vehicle:
-                        print("veh:", veh, " road_id:", road_id, " junc_id:", junc_id)
-                        # print("counts:", self.intersection_traffic_counts)
-                        # one_vehicle = False
+        #             # 初始化车辆历史
+        #             if veh_id not in self.vehicle_history:
+        #                 self.vehicle_history[veh_id] = set()
 
-                    # 初始化车辆历史
-                    if veh not in self.vehicle_history:
-                        self.vehicle_history[veh] = set()
+        #             # 如果车辆尚未被记录经过该路口，更新流量计数
+        #             if junc_id not in self.vehicle_history[veh_id]:
+        #                 self.vehicle_history[veh_id].add(junc_id)
 
-                    # 如果车辆尚未被记录经过该路口，更新流量计数
-                    if junc_id not in self.vehicle_history[veh]:
-                        self.vehicle_history[veh].add(junc_id)
+        #                 # 确保路口计数器初始化
+        #                 if junc_id not in self.intersection_traffic_counts:
+        #                     self.intersection_traffic_counts[junc_id] = 0
 
-                        # 确保路口计数器初始化
-                        if junc_id not in self.intersection_traffic_counts:
-                            self.intersection_traffic_counts[junc_id] = 0
-
-                        self.intersection_traffic_counts[junc_id] += 1
+        #                 self.intersection_traffic_counts[junc_id] += 1
 
         # 使用 SUMO API 获取当前步进入和离开网络的车辆数量
         current_departed = self.sumo_interface.tc.simulation.getDepartedNumber()
@@ -657,8 +704,13 @@ class Env(MultiAgentEnv):
             if wt > 0:
                 self.vehicles[veh_id].wait_time +=1
 
+            #新增
+
+
         ## update obs 
         self._update_obs()
+
+        self.update_traffic_flow()
 
         obs = {}
         rewards = {}

@@ -129,7 +129,7 @@ class CustomLoggerCallback(DefaultCallbacks):
 
         # 将路口流量数据存储为 histogram custom metric
         # if hasattr(worker.env, "intersection_traffic_counts"):
-        for junc_id, count in worker.env.intersection_traffic_counts.items():
+        for junc_id, count in worker.env.junction_traffic_counts.items():
             episode.custom_metrics[f"throughput_{junc_id}"] = count
 
         # 遍历每个路口，记录交通流量
