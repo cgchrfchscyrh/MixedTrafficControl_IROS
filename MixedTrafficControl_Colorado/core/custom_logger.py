@@ -137,7 +137,7 @@ class CustomLoggerCallback(DefaultCallbacks):
         # print("episode:", episode)
 
         # 定义保存文件的路径
-        base_directory = r"C:\Users\sliu78\ray_results\DQN_RV0.2\images"  # 使用原始字符串 (raw string) 避免反斜杠问题
+        base_directory = "C:\\Users\\sliu78\\ray_results\\DQN_RV0.2\\images"
         save_directory = os.path.join(base_directory, f"episode_{self.episode_count:04d}")  # 格式化为4位数字，如 0001, 0002
         if not os.path.exists(save_directory):
             os.makedirs(save_directory)  # 如果路径不存在，则创建路径
