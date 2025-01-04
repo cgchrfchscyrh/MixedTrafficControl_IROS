@@ -9,8 +9,6 @@ import os
 # from ray.rllib.evaluation import MultiAgentEpisode, RolloutWorker #type:ignore
 from ray.rllib.algorithms.callbacks import DefaultCallbacks #type:ignore
 
-episode_total = 0
-
 all_junction_list = ['cluster12203246695_12203246696_430572036_442436239', 
                        'cluster_547498658_547498666_547498756_547498762_#8more', 
                        'cluster_2052409830_2052409981_9356276530_9356276531', 
@@ -31,6 +29,9 @@ all_junction_list = ['cluster12203246695_12203246696_430572036_442436239',
                        'cluster1478663503_1478663508_cluster_12092966426_12092966445_1478663506_2515541702']
 
 class CustomLoggerCallback(DefaultCallbacks):
+
+    # episode_total = 0
+
     def on_episode_start(
             self,
             *,
@@ -41,6 +42,9 @@ class CustomLoggerCallback(DefaultCallbacks):
             env_index = None,
             **kwargs,
         ):
+        # self.episode_total = episode_total
+        # episode_total += 1
+
         env = worker.env
         env.total_departed_count = 0  # 重置进入车辆统计
         env.total_arrived_count = 0  # 重置离开车辆统计
@@ -55,8 +59,10 @@ class CustomLoggerCallback(DefaultCallbacks):
             metric_name = f"avg_wait_{JuncID}"
             episode.user_data[metric_name] = []
 
-        for JuncID in env.junction_waiting_histograms.keys():
-            env.junction_waiting_histograms[JuncID] = []
+        env.junction_waiting_histograms = {junc: [] for junc in all_junction_list}
+
+        # for JuncID in env.junction_waiting_histograms.keys():
+        #     env.junction_waiting_histograms[JuncID] = []
 
         for junc_id in env.junction_traffic_counts:
             env.junction_traffic_counts[junc_id] = 0  # 重置每个路口的车流量
@@ -124,28 +130,37 @@ class CustomLoggerCallback(DefaultCallbacks):
             metric_name = f"avg_wait_{JuncID}"  # 自定义每个路口的metric名称
             episode.custom_metrics[metric_name] = np.mean(episode.user_data[metric_name])
 
+        print("episode:", episode)
+
         # 定义保存文件的路径
         base_directory = r"C:\Users\sliu78\ray_results\DQN_RV0.2\images"  # 使用原始字符串 (raw string) 避免反斜杠问题
-        save_directory = os.path.join(base_directory, f"episode_{episode_total}")
+        save_directory = os.path.join(base_directory, f"episode_{episode.episode_id}")
         if not os.path.exists(save_directory):
             os.makedirs(save_directory)  # 如果路径不存在，则创建路径
             
+        # 创建一个字典，用于存储每个路口的等待时间
+        junction_waiting_times = {junc: [] for junc in worker.env.junction_list}
+
+        # 从 veh_waiting_juncs 中提取等待时间
+        for _, junctions in worker.env.veh_waiting_juncs.items():
+            for JuncID, waiting_time in junctions.items():
+                if JuncID in junction_waiting_times:
+                    junction_waiting_times[JuncID].append(waiting_time)
+
         # 每个路口动态更新直方图
-        for JuncID, waiting_times in worker.env.junction_waiting_histograms.items():
+        for JuncID, waiting_times in junction_waiting_times.items():
             # 绘制直方图
             plt.figure()
             plt.hist(waiting_times, bins=20, range=(0, 1000), alpha=0.7, color='blue')
-            plt.title(f"Waiting Time Distribution at Junction {JuncID} (Episode {episode_total})")
+            plt.title(f"Waiting Time Distribution at Junction \n{JuncID} \n(Episode {episode.episode_id})")
             plt.xlabel("Waiting Time (s)")
             plt.ylabel("Vehicle Count")
             plt.grid(True)
 
             # 保存直方图到磁盘，以路口ID和Episode为命名
-            # file_name = f"WT_histograms/episode_{episode.episode_id}_junction_{JuncID}.jpg"
             file_name = os.path.join(save_directory, f"junction_{JuncID}.jpg")
-
             plt.savefig(file_name, format='jpg')
-            # print(f"Saved histogram for Junction {JuncID} to {file_name}")
+            print(f"Saved histogram for Junction {JuncID} to {file_name}")
             plt.close()  # 关闭图表，防止内存泄漏
 
         # for JuncID in worker.env.junction_waiting_histograms.keys():
