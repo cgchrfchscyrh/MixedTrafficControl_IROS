@@ -55,6 +55,9 @@ class CustomLoggerCallback(DefaultCallbacks):
             metric_name = f"avg_wait_{JuncID}"
             episode.user_data[metric_name] = []
 
+        for junc_id in env.junction_traffic_counts:
+            env.junction_traffic_counts[junc_id] = 0  # 重置每个路口的车流量
+
     def on_episode_step(
             self,
             *,
@@ -130,14 +133,8 @@ class CustomLoggerCallback(DefaultCallbacks):
             # )[0].tolist()  # 将直方图转换为可记录的列表
 
         # 将路口流量数据存储为 histogram custom metric
-        # if hasattr(worker.env, "intersection_traffic_counts"):
         for junc_id, count in worker.env.junction_traffic_counts.items():
             episode.custom_metrics[f"throughput_{junc_id}"] = count
-
-        # 遍历每个路口，记录交通流量
-        # for JuncID, throughput in worker.env.junction_traffic_throughput.items():
-        #     metric_name = f"TP_{JuncID}"
-        #     episode.custom_metrics[metric_name] = throughput
 
 # if __name__ == "__main__":
 #     parser = argparse.ArgumentParser()
