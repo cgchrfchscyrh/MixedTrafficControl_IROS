@@ -88,7 +88,6 @@ class Env(MultiAgentEnv):
         self.junction_traffic_counts = {junc: 0 for junc in all_junction_list}
         self.junction_vehicle_history = {junc: set() for junc in all_junction_list}  # 每个路口的车辆历史记录
 
-
         self.init_env()
         self.previous_global_waiting = dict()
         self.all_previous_global_waiting = dict()

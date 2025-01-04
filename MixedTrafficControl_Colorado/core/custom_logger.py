@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import os
+from datetime import datetime
 # import ray #type:ignore
 # from ray import tune #type:ignore
 # from ray.rllib.env import BaseEnv #type:ignore
@@ -29,9 +30,9 @@ all_junction_list = ['cluster12203246695_12203246696_430572036_442436239',
                        'cluster1478663503_1478663508_cluster_12092966426_12092966445_1478663506_2515541702']
 
 class CustomLoggerCallback(DefaultCallbacks):
-    def __init__(self):
-        super().__init__()
-        self.episode_count = 0  # 初始化计数器
+    # def __init__(self):
+    #     super().__init__()
+    #     self.episode_count = 0  # 初始化计数器
 
     def on_episode_start(
             self,
@@ -118,7 +119,10 @@ class CustomLoggerCallback(DefaultCallbacks):
         **kwargs,
     ):
         # 增加计数器
-        self.episode_count += 1
+        # self.episode_count += 1
+
+        # 获取当前系统时间，仅小时和分钟
+        current_time = datetime.now().strftime("%H:%M")
 
         episode.custom_metrics["conflict_rate"] = np.mean(episode.user_data["conflict_rate"])
         episode.custom_metrics["avg_wait"] = np.mean(episode.user_data["avg_wait"])
@@ -136,35 +140,48 @@ class CustomLoggerCallback(DefaultCallbacks):
 
         # print("episode:", episode)
 
-        # 定义保存文件的路径
-        base_directory = "C:\\Users\\sliu78\\ray_results\\DQN_RV0.2\\images"
-        save_directory = os.path.join(base_directory, f"episode_{self.episode_count:04d}")  # 格式化为4位数字，如 0001, 0002
-        if not os.path.exists(save_directory):
-            os.makedirs(save_directory)  # 如果路径不存在，则创建路径
+        # 遍历所有路口
+        for JuncID, waiting_times in worker.env.junction_waiting_histograms.items():
+            # 计算直方图数据
+            histogram, _ = np.histogram(
+                waiting_times, bins=20, range=(0, 1000)
+            )
+
+            # 自定义 metric name，包含时间戳和路口 ID
+            metric_name = f"WTH_{JuncID}_{current_time}"
+
+            # 将 counts 数据存储到 custom metrics
+            episode.custom_metrics[metric_name] = histogram.tolist()
+
+        # # 定义保存文件的路径
+        # base_directory = "C:\\Users\\sliu78\\ray_results\\DQN_RV0.2\\images"
+        # save_directory = os.path.join(base_directory, f"episode_{self.episode_count:04d}")  # 格式化为4位数字，如 0001, 0002
+        # if not os.path.exists(save_directory):
+        #     os.makedirs(save_directory)  # 如果路径不存在，则创建路径
             
-        # 创建一个字典，用于存储每个路口的等待时间
-        junction_waiting_times = {junc: [] for junc in all_junction_list}
+        # # 创建一个字典，用于存储每个路口的等待时间
+        # junction_waiting_times = {junc: [] for junc in all_junction_list}
 
-        # 从 veh_waiting_juncs 中提取等待时间
-        for _, junctions in worker.env.veh_waiting_juncs.items():
-            for JuncID, waiting_time in junctions.items():
-                junction_waiting_times[JuncID].append(waiting_time)
+        # # 从 veh_waiting_juncs 中提取等待时间
+        # for _, junctions in worker.env.veh_waiting_juncs.items():
+        #     for JuncID, waiting_time in junctions.items():
+        #         junction_waiting_times[JuncID].append(waiting_time)
 
-        # 每个路口动态更新直方图
-        for JuncID, waiting_times in junction_waiting_times.items():
-            # 绘制直方图
-            plt.figure()
-            plt.hist(waiting_times, bins=20, range=(0, 1000), alpha=0.7, color='blue')
-            plt.title(f"Waiting Time Distribution at Junction \n{JuncID} \n(Episode {self.episode_count:04d})")
-            plt.xlabel("Waiting Time (s)")
-            plt.ylabel("Vehicle Count")
-            plt.grid(True)
+        # # 每个路口动态更新直方图
+        # for JuncID, waiting_times in junction_waiting_times.items():
+        #     # 绘制直方图
+        #     plt.figure()
+        #     plt.hist(waiting_times, bins=20, range=(0, 1000), alpha=0.7, color='blue')
+        #     plt.title(f"Waiting Time Distribution at Junction \n{JuncID} \n(Episode {self.episode_count:04d})")
+        #     plt.xlabel("Waiting Time (s)")
+        #     plt.ylabel("Vehicle Count")
+        #     plt.grid(True)
 
-            # 保存直方图到磁盘，以路口ID和Episode为命名
-            file_name = os.path.join(save_directory, f"junction_{JuncID}_episode_{self.episode_count:04d}.jpg")
-            plt.savefig(file_name, format='jpg')
-            # print(f"Saved histogram for Junction {JuncID} to {file_name}")
-            plt.close()  # 关闭图表，防止内存泄漏
+        #     # 保存直方图到磁盘，以路口ID和Episode为命名
+        #     file_name = os.path.join(save_directory, f"junction_{JuncID}_episode_{self.episode_count:04d}.jpg")
+        #     plt.savefig(file_name, format='jpg')
+        #     # print(f"Saved histogram for Junction {JuncID} to {file_name}")
+        #     plt.close()  # 关闭图表，防止内存泄漏
 
         # for JuncID in worker.env.junction_waiting_histograms.keys():
         #     metric_name = f"WT_{JuncID}"
