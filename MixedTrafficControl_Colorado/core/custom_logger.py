@@ -138,10 +138,16 @@ class CustomLoggerCallback(DefaultCallbacks):
             metric_name = f"avg_wait_{JuncID}"  # 自定义每个路口的metric名称
             episode.custom_metrics[metric_name] = np.mean(episode.user_data[metric_name])
 
-        # print("episode:", episode)
+        # 创建一个字典，用于存储每个路口的等待时间
+        junction_waiting_times = {junc: [] for junc in all_junction_list}
+
+        # 从 veh_waiting_juncs 中提取等待时间
+        for _, junctions in worker.env.veh_waiting_juncs.items():
+            for JuncID, waiting_time in junctions.items():
+                junction_waiting_times[JuncID].append(waiting_time)
 
         # 遍历所有路口
-        for JuncID, waiting_times in worker.env.junction_waiting_histograms.items():
+        for JuncID, waiting_times in junction_waiting_times.items():
             # 计算直方图数据
             histogram, _ = np.histogram(
                 waiting_times, bins=20, range=(0, 1000)
@@ -159,13 +165,6 @@ class CustomLoggerCallback(DefaultCallbacks):
         # if not os.path.exists(save_directory):
         #     os.makedirs(save_directory)  # 如果路径不存在，则创建路径
             
-        # # 创建一个字典，用于存储每个路口的等待时间
-        # junction_waiting_times = {junc: [] for junc in all_junction_list}
-
-        # # 从 veh_waiting_juncs 中提取等待时间
-        # for _, junctions in worker.env.veh_waiting_juncs.items():
-        #     for JuncID, waiting_time in junctions.items():
-        #         junction_waiting_times[JuncID].append(waiting_time)
 
         # # 每个路口动态更新直方图
         # for JuncID, waiting_times in junction_waiting_times.items():
