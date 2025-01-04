@@ -30,10 +30,6 @@ all_junction_list = ['cluster12203246695_12203246696_430572036_442436239',
                        'cluster1478663503_1478663508_cluster_12092966426_12092966445_1478663506_2515541702']
 
 class CustomLoggerCallback(DefaultCallbacks):
-    # def __init__(self):
-    #     super().__init__()
-    #     self.episode_count = 0  # 初始化计数器
-
     def on_episode_start(
             self,
             *,
@@ -146,18 +142,33 @@ class CustomLoggerCallback(DefaultCallbacks):
             for JuncID, waiting_time in junctions.items():
                 junction_waiting_times[JuncID].append(waiting_time)
 
-        # 遍历所有路口
+        # 存储到tensorboard的histogram中
         for JuncID, waiting_times in junction_waiting_times.items():
-            # 计算直方图数据
-            histogram, _ = np.histogram(
-                waiting_times, bins=20, range=(0, 1000)
-            )
+            histogram, bins = np.histogram(waiting_times, bins=20, range=(0, 1000))
+            metric_name = f"WTH_{JuncID}"
+            episode.hist_data[metric_name] = (bins[:-1].tolist(), histogram.tolist())
 
-            # 自定义 metric name，包含时间戳和路口 ID
-            metric_name = f"WTH_{JuncID}_{current_time}"
+        # for JuncID in worker.env.junction_waiting_histograms.keys():
+        #     metric_name = f"WT_{JuncID}"
+        #     # 确保数据是数值类型，且范围合理
+        #     histogram, bins = np.histogram(
+        #         worker.env.junction_waiting_histograms[JuncID], bins=20, range=(0, 1000)
+        #     )
+        #     episode.hist_data[metric_name] = (bins[:-1].tolist(), histogram.tolist())
+        #     print(f"Junction {JuncID} waiting times: {worker.env.junction_waiting_histograms[JuncID]}")
 
-            # 将 counts 数据存储到 custom metrics
-            episode.custom_metrics[metric_name] = histogram.tolist()
+        # 遍历所有路口
+        # for JuncID, waiting_times in junction_waiting_times.items():
+        #     # 计算直方图数据
+        #     histogram, _ = np.histogram(
+        #         waiting_times, bins=20, range=(0, 1000)
+        #     )
+
+        #     # 自定义 metric name，包含时间戳和路口 ID
+        #     metric_name = f"WTH_{JuncID}_{current_time}"
+
+        #     # 将 counts 数据存储到 custom metrics
+        #     episode.custom_metrics[metric_name] = histogram.tolist()
 
         # # 定义保存文件的路径
         # base_directory = "C:\\Users\\sliu78\\ray_results\\DQN_RV0.2\\images"
@@ -181,15 +192,6 @@ class CustomLoggerCallback(DefaultCallbacks):
         #     plt.savefig(file_name, format='jpg')
         #     # print(f"Saved histogram for Junction {JuncID} to {file_name}")
         #     plt.close()  # 关闭图表，防止内存泄漏
-
-        # for JuncID in worker.env.junction_waiting_histograms.keys():
-        #     metric_name = f"WT_{JuncID}"
-        #     # 确保数据是数值类型，且范围合理
-        #     histogram, bins = np.histogram(
-        #         worker.env.junction_waiting_histograms[JuncID], bins=20, range=(0, 1000)
-        #     )
-        #     episode.hist_data[metric_name] = (bins[:-1].tolist(), histogram.tolist())
-        #     print(f"Junction {JuncID} waiting times: {worker.env.junction_waiting_histograms[JuncID]}")
 
         # for JuncID in worker.env.junction_waiting_histograms.keys():
         #     # 添加直方图数据
