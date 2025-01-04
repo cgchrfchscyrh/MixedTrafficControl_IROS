@@ -86,7 +86,9 @@ class Env(MultiAgentEnv):
         # self.junction_traffic_throughput = {JuncID: 0 for JuncID in all_junction_list}
         self.all_junction_outgoing_edges = {}  # 存储每个路口的出边
         self.junction_traffic_counts = {junc: 0 for junc in all_junction_list}
-        self.vehicle_history = {}  # 每个 edge 的车辆历史
+        self.junction_vehicle_history = {junc: set() for junc in all_junction_list}  # 每个路口的车辆历史记录
+
+        # self.vehicle_history = {}  # 每个 edge 的车辆历史
 
         self.init_env()
         self.previous_global_waiting = dict()
@@ -166,9 +168,12 @@ class Env(MultiAgentEnv):
                 vehicle_ids = traci.edge.getLastStepVehicleIDs(edge_id)
                 for veh_id in vehicle_ids:
                     # 如果车辆尚未被统计，更新车流量
-                    if veh_id not in self.vehicle_history[edge_id]:
-                        self.vehicle_history[edge_id].add(veh_id)  # 添加到该 edge 的历史
-                        self.junction_traffic_counts[junc_id] += 1  # 更新对应路口的车流量
+                    if veh_id not in self.junction_vehicle_history[junc_id]:
+                        self.junction_vehicle_history[junc_id].add(veh_id)  # 添加到该路口的历史
+                        self.junction_traffic_counts[junc_id] += 1  # 更新该路口的车流量
+                    # if veh_id not in self.vehicle_history[edge_id]:
+                    #     self.vehicle_history[edge_id].add(veh_id)  # 添加到该 edge 的历史
+                    #     self.junction_traffic_counts[junc_id] += 1  # 更新对应路口的车流量
 
     def init_env(self):
         ## vehicle level
