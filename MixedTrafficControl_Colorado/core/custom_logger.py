@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import os
 # import ray #type:ignore
 # from ray import tune #type:ignore
 # from ray.rllib.env import BaseEnv #type:ignore
@@ -121,6 +122,11 @@ class CustomLoggerCallback(DefaultCallbacks):
             metric_name = f"avg_wait_{JuncID}"  # 自定义每个路口的metric名称
             episode.custom_metrics[metric_name] = np.mean(episode.user_data[metric_name])
 
+        # 定义保存文件的路径
+        save_directory = r"C:\Users\sliu78\ray_results\DQN_RV0.2"  # 使用原始字符串 (raw string) 避免反斜杠问题
+        if not os.path.exists(save_directory):
+            os.makedirs(save_directory)  # 如果路径不存在，则创建路径
+            
         # 每个路口动态更新直方图
         for JuncID, waiting_times in worker.env.junction_waiting_histograms.items():
             # 绘制直方图
@@ -132,7 +138,9 @@ class CustomLoggerCallback(DefaultCallbacks):
             plt.grid(True)
 
             # 保存直方图到磁盘，以路口ID和Episode为命名
-            file_name = f"WT_histograms/episode_{episode.episode_id}_junction_{JuncID}.jpg"
+            # file_name = f"WT_histograms/episode_{episode.episode_id}_junction_{JuncID}.jpg"
+            file_name = os.path.join(save_directory, f"episode_{episode.episode_id}_junction_{JuncID}.jpg")
+
             plt.savefig(file_name, format='jpg')
             plt.close()  # 关闭图表，防止内存泄漏
 
