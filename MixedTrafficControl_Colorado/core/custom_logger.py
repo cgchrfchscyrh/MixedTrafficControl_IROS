@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import os
+import os, threading
 from datetime import datetime
 # import ray #type:ignore
 # from ray import tune #type:ignore
@@ -65,6 +65,8 @@ class CustomLoggerCallback(DefaultCallbacks):
         for junc_id in env.junction_traffic_counts:
             env.junction_traffic_counts[junc_id] = 0  # 重置每个路口的车流量
 
+        episode.hist_data = {}
+
     def on_episode_step(
             self,
             *,
@@ -118,7 +120,10 @@ class CustomLoggerCallback(DefaultCallbacks):
         # self.episode_count += 1
 
         # 获取当前系统时间，仅小时和分钟
-        current_time = datetime.now().strftime("%H:%M")
+        # current_time = datetime.now().strftime("%H:%M")
+        # 获取当前线程 ID 和系统时间
+        thread_id = threading.get_ident()  # 获取线程 ID
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")  # 系统时间，精确到秒
 
         episode.custom_metrics["conflict_rate"] = np.mean(episode.user_data["conflict_rate"])
         episode.custom_metrics["avg_wait"] = np.mean(episode.user_data["avg_wait"])
@@ -142,11 +147,11 @@ class CustomLoggerCallback(DefaultCallbacks):
             for JuncID, waiting_time in junctions.items():
                 junction_waiting_times[JuncID].append(waiting_time)
 
-        # 存储到tensorboard的histogram中
-        for JuncID, waiting_times in junction_waiting_times.items():
-            histogram, bins = np.histogram(waiting_times, bins=20, range=(0, 1000))
-            metric_name = f"WTH_{JuncID}"
-            episode.hist_data[metric_name] = (bins[:-1].tolist(), histogram.tolist())
+        # # 存储到tensorboard的histogram中
+        # for JuncID, waiting_times in junction_waiting_times.items():
+        #     histogram, bins = np.histogram(waiting_times, bins=20, range=(0, 1000))
+        #     metric_name = f"WTH_{JuncID}"
+        #     episode.hist_data[metric_name] = (bins[:-1].tolist(), histogram.tolist())
 
         # for JuncID in worker.env.junction_waiting_histograms.keys():
         #     metric_name = f"WT_{JuncID}"
@@ -170,12 +175,27 @@ class CustomLoggerCallback(DefaultCallbacks):
         #     # 将 counts 数据存储到 custom metrics
         #     episode.custom_metrics[metric_name] = histogram.tolist()
 
-        # # 定义保存文件的路径
-        # base_directory = "C:\\Users\\sliu78\\ray_results\\DQN_RV0.2\\images"
-        # save_directory = os.path.join(base_directory, f"episode_{self.episode_count:04d}")  # 格式化为4位数字，如 0001, 0002
-        # if not os.path.exists(save_directory):
-        #     os.makedirs(save_directory)  # 如果路径不存在，则创建路径
-            
+        # 定义保存文件的路径
+        base_directory = "C:\\Users\\sliu78\\ray_results\\DQN_RV0.2\\histograms"
+        save_directory = os.path.join(base_directory, f"episode_{self.episode_count:04d}_thread_{thread_id}_{timestamp}")
+        if not os.path.exists(save_directory):
+            os.makedirs(save_directory)  # 如果路径不存在，则创建路径
+
+        # 每个路口动态更新直方图
+        for JuncID, waiting_times in junction_waiting_times.items():
+            # 绘制直方图
+            plt.figure()
+            plt.hist(waiting_times, bins=20, range=(0, 1000), alpha=0.7, color='blue')
+            plt.title(f"Waiting Time Distribution at Junction \n{JuncID} \n(Episode {self.episode_count:04d})")
+            plt.xlabel("Waiting Time (s)")
+            plt.ylabel("Vehicle Count")
+            plt.grid(True)
+
+            # 保存直方图到磁盘，以路口ID和Episode为命名
+            file_name = os.path.join(save_directory, f"junction_{JuncID}_episode_{self.episode_count:04d}_thread_{thread_id}.jpg")
+            plt.savefig(file_name, format='jpg')
+            print(f"Saved histogram for Junction {JuncID} to {file_name}")
+            plt.close()  # 关闭图表，防止内存泄漏
 
         # # 每个路口动态更新直方图
         # for JuncID, waiting_times in junction_waiting_times.items():
@@ -207,8 +227,6 @@ class CustomLoggerCallback(DefaultCallbacks):
         # 将路口流量数据存储为 histogram custom metric
         for junc_id, count in worker.env.junction_traffic_counts.items():
             episode.custom_metrics[f"throughput_{junc_id}"] = count
-
-        # episode_total += 1
 
 # if __name__ == "__main__":
 #     parser = argparse.ArgumentParser()
