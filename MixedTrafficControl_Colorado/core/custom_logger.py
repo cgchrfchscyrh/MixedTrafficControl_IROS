@@ -1,9 +1,7 @@
-# from typing import Dict
-import argparse
 import numpy as np
-
-import ray #type:ignore
-from ray import tune #type:ignore
+import matplotlib.pyplot as plt
+# import ray #type:ignore
+# from ray import tune #type:ignore
 # from ray.rllib.env import BaseEnv #type:ignore
 # from ray.rllib.policy import Policy #type:ignore
 # from ray.rllib.policy.sample_batch import SampleBatch #type:ignore
@@ -123,13 +121,29 @@ class CustomLoggerCallback(DefaultCallbacks):
             metric_name = f"avg_wait_{JuncID}"  # 自定义每个路口的metric名称
             episode.custom_metrics[metric_name] = np.mean(episode.user_data[metric_name])
 
-        for JuncID in worker.env.junction_waiting_histograms.keys():
-            metric_name = f"WT_{JuncID}"
-            # 确保数据是数值类型，且范围合理
-            histogram, bins = np.histogram(
-                worker.env.junction_waiting_histograms[JuncID], bins=20, range=(0, 1000)
-            )
-            episode.hist_data[metric_name] = (bins[:-1].tolist(), histogram.tolist())
+        # 每个路口动态更新直方图
+        for JuncID, waiting_times in worker.env.junction_waiting_histograms.items():
+            # 绘制直方图
+            plt.figure()
+            plt.hist(waiting_times, bins=20, range=(0, 1000), alpha=0.7, color='blue')
+            plt.title(f"Waiting Time Distribution at Junction {JuncID} (Episode {episode.episode_id})")
+            plt.xlabel("Waiting Time (s)")
+            plt.ylabel("Vehicle Count")
+            plt.grid(True)
+
+            # 保存直方图到磁盘，以路口ID和Episode为命名
+            file_name = f"WT_histograms/episode_{episode.episode_id}_junction_{JuncID}.jpg"
+            plt.savefig(file_name, format='jpg', quality=85)
+            plt.close()  # 关闭图表，防止内存泄漏
+
+        # for JuncID in worker.env.junction_waiting_histograms.keys():
+        #     metric_name = f"WT_{JuncID}"
+        #     # 确保数据是数值类型，且范围合理
+        #     histogram, bins = np.histogram(
+        #         worker.env.junction_waiting_histograms[JuncID], bins=20, range=(0, 1000)
+        #     )
+        #     episode.hist_data[metric_name] = (bins[:-1].tolist(), histogram.tolist())
+        #     print(f"Junction {JuncID} waiting times: {worker.env.junction_waiting_histograms[JuncID]}")
 
         # for JuncID in worker.env.junction_waiting_histograms.keys():
         #     # 添加直方图数据
