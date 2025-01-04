@@ -133,7 +133,7 @@ class CustomLoggerCallback(DefaultCallbacks):
 
             # 保存直方图到磁盘，以路口ID和Episode为命名
             file_name = f"WT_histograms/episode_{episode.episode_id}_junction_{JuncID}.jpg"
-            plt.savefig(file_name, format='jpg', quality=85)
+            plt.savefig(file_name, format='jpg')
             plt.close()  # 关闭图表，防止内存泄漏
 
         # for JuncID in worker.env.junction_waiting_histograms.keys():
