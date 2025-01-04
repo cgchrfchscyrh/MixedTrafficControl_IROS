@@ -187,7 +187,7 @@ class CustomLoggerCallback(DefaultCallbacks):
         for junc_id, count in worker.env.junction_traffic_counts.items():
             episode.custom_metrics[f"throughput_{junc_id}"] = count
 
-        episode_total += 1
+        # episode_total += 1
 
 # if __name__ == "__main__":
 #     parser = argparse.ArgumentParser()
