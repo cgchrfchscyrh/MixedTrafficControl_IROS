@@ -9,6 +9,8 @@ import os
 # from ray.rllib.evaluation import MultiAgentEpisode, RolloutWorker #type:ignore
 from ray.rllib.algorithms.callbacks import DefaultCallbacks #type:ignore
 
+episode_total = 0
+
 all_junction_list = ['cluster12203246695_12203246696_430572036_442436239', 
                        'cluster_547498658_547498666_547498756_547498762_#8more', 
                        'cluster_2052409830_2052409981_9356276530_9356276531', 
@@ -123,7 +125,8 @@ class CustomLoggerCallback(DefaultCallbacks):
             episode.custom_metrics[metric_name] = np.mean(episode.user_data[metric_name])
 
         # 定义保存文件的路径
-        save_directory = r"C:\Users\sliu78\ray_results\DQN_RV0.2"  # 使用原始字符串 (raw string) 避免反斜杠问题
+        base_directory = r"C:\Users\sliu78\ray_results\DQN_RV0.2\images"  # 使用原始字符串 (raw string) 避免反斜杠问题
+        save_directory = os.path.join(base_directory, f"episode_{episode_total}")
         if not os.path.exists(save_directory):
             os.makedirs(save_directory)  # 如果路径不存在，则创建路径
             
@@ -132,16 +135,17 @@ class CustomLoggerCallback(DefaultCallbacks):
             # 绘制直方图
             plt.figure()
             plt.hist(waiting_times, bins=20, range=(0, 1000), alpha=0.7, color='blue')
-            plt.title(f"Waiting Time Distribution at Junction {JuncID} (Episode {episode.episode_id})")
+            plt.title(f"Waiting Time Distribution at Junction {JuncID} (Episode {episode_total})")
             plt.xlabel("Waiting Time (s)")
             plt.ylabel("Vehicle Count")
             plt.grid(True)
 
             # 保存直方图到磁盘，以路口ID和Episode为命名
             # file_name = f"WT_histograms/episode_{episode.episode_id}_junction_{JuncID}.jpg"
-            file_name = os.path.join(save_directory, f"episode_{episode.episode_id}_junction_{JuncID}.jpg")
+            file_name = os.path.join(save_directory, f"junction_{JuncID}.jpg")
 
             plt.savefig(file_name, format='jpg')
+            # print(f"Saved histogram for Junction {JuncID} to {file_name}")
             plt.close()  # 关闭图表，防止内存泄漏
 
         # for JuncID in worker.env.junction_waiting_histograms.keys():
@@ -167,6 +171,8 @@ class CustomLoggerCallback(DefaultCallbacks):
         # 将路口流量数据存储为 histogram custom metric
         for junc_id, count in worker.env.junction_traffic_counts.items():
             episode.custom_metrics[f"throughput_{junc_id}"] = count
+
+        episode_total += 1
 
 # if __name__ == "__main__":
 #     parser = argparse.ArgumentParser()
