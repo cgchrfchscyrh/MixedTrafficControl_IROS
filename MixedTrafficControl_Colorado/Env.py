@@ -88,7 +88,6 @@ class Env(MultiAgentEnv):
         self.junction_traffic_counts = {junc: 0 for junc in all_junction_list}
         self.junction_vehicle_history = {junc: set() for junc in all_junction_list}  # 每个路口的车辆历史记录
 
-        # self.vehicle_history = {}  # 每个 edge 的车辆历史
 
         self.init_env()
         self.previous_global_waiting = dict()
@@ -100,9 +99,9 @@ class Env(MultiAgentEnv):
             self.all_junction_outgoing_edges[junc_id] = traci.junction.getOutgoingEdges(junc_id)
 
         # 初始化每个 edge 的车辆历史
-        for junc_id, outgoing_edges in self.all_junction_outgoing_edges.items():
-            for edge_id in outgoing_edges:
-                self.vehicle_history[edge_id] = set()  # 每个边一个独立的 set
+        # for junc_id, outgoing_edges in self.all_junction_outgoing_edges.items():
+        #     for edge_id in outgoing_edges:
+        #         self.vehicle_history[edge_id] = set()  # 每个边一个独立的 set
 
         # print("outgoing edges: ", self.all_junction_outgoing_edges)
 
