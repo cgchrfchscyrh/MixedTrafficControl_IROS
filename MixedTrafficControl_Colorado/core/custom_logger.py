@@ -46,14 +46,16 @@ class CustomLoggerCallback(DefaultCallbacks):
         
         episode.user_data["conflict_rate"] = []
         episode.user_data["avg_wait"] = []
-        # episode.user_data["traffic_flow_rate"] = []  # 新增车流量列表
         episode.user_data["total_departed"] = 0  # 初始化进入网络的车辆总数
         episode.user_data["total_arrived"] = 0   # 初始化离开网络的车辆总数
 
-        # 新增：初始化每个路口的等待时间统计
+        # 初始化每个路口的等待时间统计
         for JuncID in all_junction_list:
             metric_name = f"avg_wait_{JuncID}"
             episode.user_data[metric_name] = []
+
+        for JuncID in env.junction_waiting_histograms.keys():
+            env.junction_waiting_histograms[JuncID] = []
 
         for junc_id in env.junction_traffic_counts:
             env.junction_traffic_counts[junc_id] = 0  # 重置每个路口的车流量
@@ -122,12 +124,20 @@ class CustomLoggerCallback(DefaultCallbacks):
             episode.custom_metrics[metric_name] = np.mean(episode.user_data[metric_name])
 
         for JuncID in worker.env.junction_waiting_histograms.keys():
-            # 添加直方图数据
             metric_name = f"WT_{JuncID}"
-            histogram, _ = np.histogram(
-            worker.env.junction_waiting_histograms[JuncID], bins=20, range=(0, 1000)
+            # 确保数据是数值类型，且范围合理
+            histogram, bins = np.histogram(
+                worker.env.junction_waiting_histograms[JuncID], bins=20, range=(0, 1000)
             )
-            episode.custom_metrics[metric_name] = histogram.tolist()  # 转换为列表记录
+            episode.hist_data[metric_name] = (bins[:-1].tolist(), histogram.tolist())
+
+        # for JuncID in worker.env.junction_waiting_histograms.keys():
+        #     # 添加直方图数据
+        #     metric_name = f"WT_{JuncID}"
+        #     histogram, _ = np.histogram(
+        #     worker.env.junction_waiting_histograms[JuncID], bins=20, range=(0, 1000)
+        #     )
+        #     episode.custom_metrics[metric_name] = histogram.tolist()  # 转换为列表记录
             # episode.custom_metrics[metric_name] = np.histogram(
             #     worker.env.junction_waiting_histograms[JuncID], bins=10
             # )[0].tolist()  # 将直方图转换为可记录的列表
