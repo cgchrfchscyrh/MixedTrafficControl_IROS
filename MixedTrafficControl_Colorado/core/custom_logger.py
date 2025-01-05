@@ -30,6 +30,10 @@ all_junction_list = ['cluster12203246695_12203246696_430572036_442436239',
                        'cluster1478663503_1478663508_cluster_12092966426_12092966445_1478663506_2515541702']
 
 class CustomLoggerCallback(DefaultCallbacks):
+    def __init__(self):
+        super().__init__()
+        self.episode_count = 0  # 初始化计数器
+
     def on_episode_start(
             self,
             *,
@@ -116,14 +120,16 @@ class CustomLoggerCallback(DefaultCallbacks):
         env_index = None,
         **kwargs,
     ):
-        # 增加计数器
-        # self.episode_count += 1
+        #增加计数器
+        self.episode_count += 1
 
         # 获取当前系统时间，仅小时和分钟
         # current_time = datetime.now().strftime("%H:%M")
         # 获取当前线程 ID 和系统时间
         thread_id = threading.get_ident()  # 获取线程 ID
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")  # 系统时间，精确到秒
+
+        # global_episode_count = increment_episode_count()
 
         episode.custom_metrics["conflict_rate"] = np.mean(episode.user_data["conflict_rate"])
         episode.custom_metrics["avg_wait"] = np.mean(episode.user_data["avg_wait"])
@@ -177,7 +183,9 @@ class CustomLoggerCallback(DefaultCallbacks):
 
         # 定义保存文件的路径
         base_directory = "C:\\Users\\sliu78\\ray_results\\DQN_RV0.2\\histograms"
-        save_directory = os.path.join(base_directory, f"episode_{self.episode_count:04d}_thread_{thread_id}_{timestamp}")
+        # save_directory = os.path.join(base_directory, f"episode_{self.episode_count:04d}_thread_{thread_id}_{timestamp}")
+        save_directory = os.path.join(base_directory, f"episode_{self.episode_count:04d}")
+
         if not os.path.exists(save_directory):
             os.makedirs(save_directory)  # 如果路径不存在，则创建路径
 
