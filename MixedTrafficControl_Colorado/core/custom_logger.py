@@ -4,6 +4,8 @@ matplotlib.use('Agg')  # 设置为非交互模式后端
 import matplotlib.pyplot as plt
 import os, threading
 from datetime import datetime
+from collections import defaultdict
+
 # import ray #type:ignore
 # from ray import tune #type:ignore
 # from ray.rllib.env import BaseEnv #type:ignore
@@ -186,15 +188,20 @@ class CustomLoggerCallback(DefaultCallbacks):
         # 定义保存文件的路径
         # base_directory = "C:\\Users\\sliu78\\ray_results\\DQN_RV0.2\\histograms"
         base_directory = "C:\\Users\\cgchr\\ray_results\\DQN_RV0.2\\histograms"
-
         save_directory = os.path.join(base_directory, f"episode_{self.episode_count:04d}_thread_{thread_id}_{timestamp}")
         # save_directory = os.path.join(base_directory, f"episode_{self.episode_count:04d}")
 
         if not os.path.exists(save_directory):
-            os.makedirs(save_directory)  # 如果路径不存在，则创建路径
+            os.makedirs(save_directory)
 
         # 每个路口动态更新直方图
         for JuncID, waiting_times in junction_waiting_times.items():
+            histogram, bins = np.histogram(waiting_times, bins=20, range=(0, 1000))
+            # 保存直方图数据为 .npy 文件
+            npy_file = os.path.join(save_directory, f"junction_{JuncID}_episode_{self.episode_count:04d}_thread_{thread_id}.npy")
+            np.save(npy_file, {"bins": bins, "counts": histogram})
+            print(f"Saved histogram data for Junction {JuncID} to {npy_file}")
+
             # 绘制直方图
             plt.figure()
             plt.hist(waiting_times, bins=20, range=(0, 1000), alpha=0.7, color='blue')
