@@ -182,9 +182,11 @@ class CustomLoggerCallback(DefaultCallbacks):
         #     episode.custom_metrics[metric_name] = histogram.tolist()
 
         # 定义保存文件的路径
-        base_directory = "C:\\Users\\sliu78\\ray_results\\DQN_RV0.2\\histograms"
-        # save_directory = os.path.join(base_directory, f"episode_{self.episode_count:04d}_thread_{thread_id}_{timestamp}")
-        save_directory = os.path.join(base_directory, f"episode_{self.episode_count:04d}")
+        # base_directory = "C:\\Users\\sliu78\\ray_results\\DQN_RV0.2\\histograms"
+        base_directory = "C:\\Users\\cgchr\\ray_results\\DQN_RV0.2\\histograms"
+
+        save_directory = os.path.join(base_directory, f"episode_{self.episode_count:04d}_thread_{thread_id}_{timestamp}")
+        # save_directory = os.path.join(base_directory, f"episode_{self.episode_count:04d}")
 
         if not os.path.exists(save_directory):
             os.makedirs(save_directory)  # 如果路径不存在，则创建路径
