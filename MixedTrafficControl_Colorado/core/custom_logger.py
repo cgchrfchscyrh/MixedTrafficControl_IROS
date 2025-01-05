@@ -1,4 +1,6 @@
 import numpy as np
+import matplotlib
+matplotlib.use('Agg')  # 设置为非交互模式后端
 import matplotlib.pyplot as plt
 import os, threading
 from datetime import datetime
