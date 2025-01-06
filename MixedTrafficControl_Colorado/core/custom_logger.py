@@ -69,6 +69,8 @@ class CustomLoggerCallback(DefaultCallbacks):
 
         # for JuncID in env.junction_waiting_histograms.keys():
         #     env.junction_waiting_histograms[JuncID] = []
+        
+        env.junction_vehicle_history = {junc: set() for junc in all_junction_list}
 
         for junc_id in env.junction_traffic_counts:
             env.junction_traffic_counts[junc_id] = 0  # 重置每个路口的车流量
