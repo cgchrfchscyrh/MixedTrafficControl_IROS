@@ -32,7 +32,6 @@ parser.add_argument(
     help="Number of timesteps to test.",
 )
 
-
 parser.add_argument(
     "--model-dir", type=str, required=True, help="path to the RL model for evaluation"
 )
@@ -40,7 +39,7 @@ parser.add_argument(
     "--save-dir", type=str, required=True, help="folder directory for saving evaluation results"
 )
 parser.add_argument(
-    "--rv-rate", type=float, default=1.0, help="RV percentage. 0.0-1.0"
+    "--rv-rate", type=float, default=0.2, help="RV percentage. 0.0-1.0"
 )
 parser.add_argument(
     "--explore-during-inference",
@@ -61,12 +60,15 @@ if __name__ == "__main__":
     
     ## TODO map xml could be parsed from sumocfg file
     env = Env({
-            "junction_list":['229','499','332','334'],
+            "junction_list":['cluster12203246695_12203246696_430572036_442436239',
+                    'cluster_2052409422_2052409707_542824247_542824770_#2more',
+                    'cluster_2093101229_2093101656_2093101781_2093101915_#8more',
+                    'cluster_439980117_439980118_442435910_442435912'],
             "spawn_rl_prob":{},
             "probablity_RL":rv_rate,
-            "cfg":'real_data/osm.sumocfg',
+            "cfg":'sumo_networks/colorado/colorado.sumocfg',
             "render":True,
-            "map_xml":'real_data/CSeditClean_1.net_threelegs.xml',
+            "map_xml":'sumo_networks/colorado/colorado.net.xml',
             "max_episode_steps":args.stop_timesteps,
             "conflict_mechanism":'off',
             "traffic_light_program":{
@@ -78,7 +80,6 @@ if __name__ == "__main__":
     episode_reward = 0
     dones = truncated = {}
     dones['__all__'] = truncated['__all__'] = False
-
 
     obs, info = env.reset()
 
@@ -92,12 +93,12 @@ if __name__ == "__main__":
                 obs.pop(key)
         if dones['__all__']:
             obs, info = env.reset()
-            num_episodes += 1
+            # num_episodes += 1
     
     env.monitor.evaluate()
-    save_path = args.save_dir+'/'+st(args.rv_rate)+'log.pkl'
-    env.monitor.evaluate()
-    env.monitor.save_to_pickle(file_name = save_path)
+    # save_path = args.save_dir+'/'+str(args.rv_rate)+'log.pkl'
+    # env.monitor.evaluate()
+    # env.monitor.save_to_pickle(file_name = save_path)
     algo.stop()
 
     ray.shutdown()
