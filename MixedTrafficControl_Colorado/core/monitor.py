@@ -103,11 +103,74 @@ class DataMonitor(object):
     #             print("Avg waiting time at" + JuncID +" "+keyword+": "+str(avg_wait))
     #         print("Total avg wait time at junction "+JuncID+": " +str(np.mean(total_wait)))
 
+    # def evaluate(self, env, min_step=500, max_step=1000):
+    #     # 初始化统计变量
+    #     total_wait = []  # 所有车辆的等待时间
+
+    #     # 创建一个字典，用于存储每个路口的等待时间
+    #     junction_waiting_times = {junc: [] for junc in all_junction_list}
+
+    #     # 从 veh_waiting_juncs 中提取等待时间
+    #     for _, junctions in env.veh_waiting_juncs.items():
+    #         for JuncID, waiting_time in junctions.items():
+    #             junction_waiting_times[JuncID].append(waiting_time)
+
+    #     # 当前JuncID的所有方向Keyword上的所有在control zone之内的车辆的等待时间的平均值
+    #     # for JuncID in self.all_previous_global_waiting.keys():
+    #     #     waiting_time = self.all_previous_global_waiting[JuncID]['sum']
+    #     #     metric_name = f"avg_wait_{JuncID}"
+    #     #     episode.user_data[metric_name].extend([waiting_time])
+
+    #     # 遍历每个路口并统计数据
+    #     for JuncID in all_junction_list:
+    #         junction_wait = []  # 当前路口的等待时间
+    #         for keyword in self.keywords_order:
+    #             # 计算当前路口和方向的平均等待时间
+    #             avg_wait = np.mean(self.data_record[JuncID][keyword]['queue_wait'][min_step:max_step])
+    #             junction_wait.append(avg_wait)
+
+    #             # 打印每个方向的等待时间
+    #             # print(f"Avg waiting time at {JuncID} {keyword}: {avg_wait:.2f}")
+
+    #         # 累计所有路口的总数据
+    #         total_wait.extend(junction_wait)
+
+    #         # 2. 打印当前路口的总平均等待时间
+    #         print(f"Total avg wait time at junction {JuncID}: {np.mean(junction_wait):.2f}\n")
+
+    #     # 打印整个网络的统计结果
+    #     print("\n--- Network statistics ---")
+    #     # 1. 打印所有路口的平均等待时间
+    #     print(f"Total Avg Wait Time: {np.mean(total_wait):.2f}")
+
+    #     # 2.5 每个路口的直方图，不受min_step和max_step限制，只要是在路口有过等待时间的车辆都会被计算
+    #     for JuncID, waiting_times in junction_waiting_times.items():
+    #         plt.figure()
+    #         plt.hist(waiting_times, bins=20, range=(0, 1000), alpha=0.7, color='blue')
+    #         plt.title(f"Waiting Time Histogram \n{JuncID}")
+    #         plt.xlabel("Waiting Time (s)")
+    #         plt.ylabel("Vehicle Count")
+    #         plt.grid(True)
+
+    #         # 保存直方图到磁盘，以路口ID为命名
+    #         file_name = os.path.join(f"WTH_{JuncID}.jpg")
+    #         plt.savefig(file_name, format='jpg')
+    #         print(f"Saved histogram for Junction {JuncID} to {file_name}")
+    #         plt.close()  # 关闭图表，防止内存泄漏
+
+    #     # 3. 打印到达目的地的车辆数量
+    #     print(f"Total Arrivals: {env.total_arrived_count}")
+
+    #     # 4. 打印每个路口的车流量
+    #     print("\n--- Per junction throughput ---")
+    #     for junc_id, count in env.junction_traffic_counts.items():
+    #         print(f"{junc_id} - Throughput: {count}")
+
+    #     return np.mean(total_wait), env.total_arrived_count
+    
     def evaluate(self, env, min_step=500, max_step=1000):
         # 初始化统计变量
         total_wait = []  # 所有车辆的等待时间
-
-        # self.all_previous_global_waiting[JuncID]['sum'] = weighted_sum
 
         # 创建一个字典，用于存储每个路口的等待时间
         junction_waiting_times = {junc: [] for junc in all_junction_list}
@@ -117,11 +180,9 @@ class DataMonitor(object):
             for JuncID, waiting_time in junctions.items():
                 junction_waiting_times[JuncID].append(waiting_time)
 
-        # 当前JuncID的所有方向Keyword上的所有在control zone之内的车辆的等待时间的平均值
-        # for JuncID in self.all_previous_global_waiting.keys():
-        #     waiting_time = self.all_previous_global_waiting[JuncID]['sum']
-        #     metric_name = f"avg_wait_{JuncID}"
-        #     episode.user_data[metric_name].extend([waiting_time])
+        # 存储每个路口的平均等待时间和车流量
+        per_junction_avg_wait = {}
+        per_junction_throughput = {}
 
         # 遍历每个路口并统计数据
         for JuncID in all_junction_list:
@@ -131,21 +192,20 @@ class DataMonitor(object):
                 avg_wait = np.mean(self.data_record[JuncID][keyword]['queue_wait'][min_step:max_step])
                 junction_wait.append(avg_wait)
 
-                # 打印每个方向的等待时间
-                # print(f"Avg waiting time at {JuncID} {keyword}: {avg_wait:.2f}")
-
             # 累计所有路口的总数据
             total_wait.extend(junction_wait)
 
-            # 2. 打印当前路口的总平均等待时间
-            print(f"Total avg wait time at junction {JuncID}: {np.mean(junction_wait):.2f}\n")
+            # 记录当前路口的平均等待时间
+            per_junction_avg_wait[JuncID] = np.mean(junction_wait)
+
+            # 打印当前路口的总平均等待时间
+            print(f"Total avg wait time at junction {JuncID}: {per_junction_avg_wait[JuncID]:.2f}")
 
         # 打印整个网络的统计结果
         print("\n--- Network statistics ---")
-        # 1. 打印所有路口的平均等待时间
         print(f"Total Avg Wait Time: {np.mean(total_wait):.2f}")
 
-        # 2.5 每个路口的直方图，不受min_step和max_step限制，只要是在路口有过等待时间的车辆都会被计算
+        # 每个路口的直方图，不受 min_step 和 max_step 限制
         for JuncID, waiting_times in junction_waiting_times.items():
             plt.figure()
             plt.hist(waiting_times, bins=20, range=(0, 1000), alpha=0.7, color='blue')
@@ -160,13 +220,22 @@ class DataMonitor(object):
             print(f"Saved histogram for Junction {JuncID} to {file_name}")
             plt.close()  # 关闭图表，防止内存泄漏
 
-        # 3. 打印到达目的地的车辆数量
+        # 打印到达目的地的车辆数量
         print(f"Total Arrivals: {env.total_arrived_count}")
 
-        # 4. 打印每个路口的车流量
+        # 打印每个路口的车流量
         print("\n--- Per junction throughput ---")
         for junc_id, count in env.junction_traffic_counts.items():
+            per_junction_throughput[junc_id] = count
             print(f"{junc_id} - Throughput: {count}")
+
+        # 返回所有统计数据
+        return (
+            np.mean(total_wait),  # 整个网络的平均等待时间
+            env.total_arrived_count,  # 到达目的地的车辆数量
+            per_junction_avg_wait,  # 每个路口的平均等待时间
+            per_junction_throughput,  # 每个路口的车流量
+        )
 
     def eval_traffic_flow(self, JuncID, time_range):
         inflow_intersection = []
