@@ -4,6 +4,7 @@ from ray.rllib.algorithms.algorithm import Algorithm
 import argparse
 import ray
 from Env import Env
+from collections import defaultdict
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
@@ -63,12 +64,14 @@ if __name__ == "__main__":
     })
 
     results = []
+    all_junction_wait_times = defaultdict(list)
+    all_junction_throughputs = defaultdict(list)
+
     start_time = time.time()
     for i in range(100):
         print(f"{rv_rate}: Starting evaluation {i + 1}/100...")
         env.total_arrived_count = 0
         evaluation_start = time.time()
-        episode_reward = 0
         dones = truncated = {}
         dones['__all__'] = truncated['__all__'] = False
 
@@ -86,7 +89,15 @@ if __name__ == "__main__":
             if dones['__all__']:
                 obs, info = env.reset()
 
-        avg_wait, total_arrived = env.monitor.evaluate(env)
+        avg_wait, total_arrived, per_junction_avg_wait, per_junction_throughput = env.monitor.evaluate(env)
+
+        # Append junction-level results
+        for junc_id, avg_wait_time in per_junction_avg_wait.items():
+            all_junction_wait_times[junc_id].append(avg_wait_time)
+        for junc_id, throughput in per_junction_throughput.items():
+            all_junction_throughputs[junc_id].append(throughput)
+
+        # Append overall results
         results.append((avg_wait, total_arrived))
         evaluation_time = time.time() - evaluation_start
         print(f"{rv_rate}: Evaluation {i + 1}/100 completed: avg_wait={avg_wait}, total_arrived={total_arrived}, time={evaluation_time:.2f}s")
@@ -98,7 +109,16 @@ if __name__ == "__main__":
     avg_wait_results = [r[0] for r in results]
     total_arrived_results = [r[1] for r in results]
 
-    # Compute statistics
+    # Compute per-junction statistics
+    print("\n--- Per Junction Statistics ---")
+    for junc_id in all_junction_wait_times.keys():
+        avg_wait = np.mean(all_junction_wait_times[junc_id])
+        avg_throughput = np.mean(all_junction_throughputs[junc_id])
+        print(f"Junction {junc_id}:")
+        print(f"  Avg Wait Time: {avg_wait:.2f}")
+        print(f"  Avg Throughput: {avg_throughput:.2f}")
+
+    # Compute overall statistics
     def compute_statistics(data, name):
         q1 = np.percentile(data, 25)
         median = np.median(data)
