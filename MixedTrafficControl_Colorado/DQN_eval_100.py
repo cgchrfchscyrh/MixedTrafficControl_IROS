@@ -105,40 +105,48 @@ if __name__ == "__main__":
     total_time = time.time() - start_time
     print(f"\n{rv_rate}: 100 evaluations completed in {total_time:.2f}s.")
 
-    # Extract avg_wait and total_arrived results
-    avg_wait_results = [r[0] for r in results]
-    total_arrived_results = [r[1] for r in results]
-
-    # Compute per-junction statistics
-    print("\n--- Per Junction Statistics ---")
-    for junc_id in all_junction_wait_times.keys():
-        avg_wait = np.mean(all_junction_wait_times[junc_id])
-        avg_throughput = np.mean(all_junction_throughputs[junc_id])
-        print(f"Junction {junc_id}:")
-        print(f"  Avg Wait Time: {avg_wait:.2f}")
-        print(f"  Avg Throughput: {avg_throughput:.2f}")
-
-    # Compute overall statistics
-    def compute_statistics(data, name):
+    # Unified statistics function
+    def compute_stats(data, name, is_per_junction=False):
         q1 = np.percentile(data, 25)
         median = np.median(data)
         q3 = np.percentile(data, 75)
         iqr = q3 - q1
         minimum = np.min(data)
         maximum = np.max(data)
-        print(f"\n{rv_rate}: {name} Statistics:")
+        print(f"\n{name} Statistics:")
         print(f"  Minimum: {minimum}")
         print(f"  Q1: {q1}")
         print(f"  Median: {median}")
         print(f"  Q3: {q3}")
         print(f"  IQR: {iqr}")
         print(f"  Maximum: {maximum}")
+        if is_per_junction:
+            return {
+                "Minimum": minimum,
+                "Q1": q1,
+                "Median": median,
+                "Q3": q3,
+                "IQR": iqr,
+                "Maximum": maximum
+            }
 
-    print(f"\n{rv_rate}: avg_wait_results:", avg_wait_results)
-    print(f"\n{rv_rate}: total_arrived_results:", total_arrived_results)
+    # Compute per-junction statistics
+    print("\n--- Per Junction Statistics ---")
+    junction_stats = {}
+    for junc_id in all_junction_wait_times.keys():
+        print(f"Junction {junc_id} - Waiting Time:")
+        junction_stats[junc_id] = compute_stats(all_junction_wait_times[junc_id], f"Junction {junc_id} - Waiting Time", is_per_junction=True)
+        print(f"Junction {junc_id} - Throughput:")
+        compute_stats(all_junction_throughputs[junc_id], f"Junction {junc_id} - Throughput")
 
-    compute_statistics(avg_wait_results, "Average Wait Time")
-    compute_statistics(total_arrived_results, "Total Arrived")
+    # Compute overall statistics
+    avg_wait_results = [r[0] for r in results]
+    total_arrived_results = [r[1] for r in results]
+
+    print(f"\n{rv_rate}: Overall Average Wait Time:")
+    compute_stats(avg_wait_results, "Average Wait Time")
+    print(f"\n{rv_rate}: Overall Total Arrived:")
+    compute_stats(total_arrived_results, "Total Arrived")
 
     algo.stop()
     ray.shutdown()
