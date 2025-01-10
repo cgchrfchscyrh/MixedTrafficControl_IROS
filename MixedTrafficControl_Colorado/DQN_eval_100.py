@@ -65,7 +65,7 @@ if __name__ == "__main__":
     results = []
     start_time = time.time()
     for i in range(100):
-        print(f"Starting evaluation {i + 1}/100...")
+        print(f"{rv_rate}: Starting evaluation {i + 1}/100...")
         evaluation_start = time.time()
         episode_reward = 0
         dones = truncated = {}
@@ -88,10 +88,10 @@ if __name__ == "__main__":
         avg_wait, total_arrived = env.monitor.evaluate(env)
         results.append((avg_wait, total_arrived))
         evaluation_time = time.time() - evaluation_start
-        print(f"Evaluation {i + 1}/100 completed: avg_wait={avg_wait}, total_arrived={total_arrived}, time={evaluation_time:.2f}s")
+        print(f"{rv_rate}: Evaluation {i + 1}/100 completed: avg_wait={avg_wait}, total_arrived={total_arrived}, time={evaluation_time:.2f}s")
 
     total_time = time.time() - start_time
-    print(f"\n100 evaluations completed in {total_time:.2f}s.")
+    print(f"\n{rv_rate}: 100 evaluations completed in {total_time:.2f}s.")
 
     # Extract avg_wait and total_arrived results
     avg_wait_results = [r[0] for r in results]
@@ -105,7 +105,7 @@ if __name__ == "__main__":
         iqr = q3 - q1
         minimum = np.min(data)
         maximum = np.max(data)
-        print(f"\n{name} Statistics:")
+        print(f"\n{rv_rate}: {name} Statistics:")
         print(f"  Minimum: {minimum}")
         print(f"  Q1: {q1}")
         print(f"  Median: {median}")
@@ -113,8 +113,8 @@ if __name__ == "__main__":
         print(f"  IQR: {iqr}")
         print(f"  Maximum: {maximum}")
 
-    print("\navg_wait_results:", avg_wait_results)
-    print("total_arrived_results:", total_arrived_results)
+    print(f"\n{rv_rate}: avg_wait_results:", avg_wait_results)
+    print(f"\n{rv_rate}: total_arrived_results:", total_arrived_results)
 
     compute_statistics(avg_wait_results, "Average Wait Time")
     compute_statistics(total_arrived_results, "Total Arrived")
