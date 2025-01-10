@@ -832,6 +832,8 @@ class Env(MultiAgentEnv):
     def reset(self, *, seed=None, options=None):
         # self._print_debug('reset')
         # soft reset
+        self.total_arrived_count = 0
+
         while not self.sumo_interface.reset_sumo():
             pass
 
