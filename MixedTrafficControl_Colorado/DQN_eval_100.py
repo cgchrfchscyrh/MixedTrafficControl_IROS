@@ -55,7 +55,7 @@ if __name__ == "__main__":
         "render": False,
         "map_xml": 'sumo_networks/colorado/colorado.net.xml',
         "max_episode_steps": args.stop_timesteps,
-        "conflict_mechanism": 'off',
+        "conflict_mechanism": 'flexible',
         "traffic_light_program": {
             "disable_state": 'G',
             "disable_light_start": 0
@@ -112,6 +112,9 @@ if __name__ == "__main__":
         print(f"  Q3: {q3}")
         print(f"  IQR: {iqr}")
         print(f"  Maximum: {maximum}")
+
+    print("\navg_wait_results:", avg_wait_results)
+    print("total_arrived_results:", total_arrived_results)
 
     compute_statistics(avg_wait_results, "Average Wait Time")
     compute_statistics(total_arrived_results, "Total Arrived")
