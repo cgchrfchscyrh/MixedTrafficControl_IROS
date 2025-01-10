@@ -66,6 +66,7 @@ if __name__ == "__main__":
     start_time = time.time()
     for i in range(100):
         print(f"{rv_rate}: Starting evaluation {i + 1}/100...")
+        env.total_arrived_count = 0
         evaluation_start = time.time()
         episode_reward = 0
         dones = truncated = {}
