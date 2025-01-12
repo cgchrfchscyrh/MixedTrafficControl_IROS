@@ -23,7 +23,7 @@ parser.add_argument("--num-cpus", type=int, default=0)
 parser.add_argument("--framework",choices=["tf", "tf2", "torch"],default="torch",help="The DL framework specifier.")
 parser.add_argument("--as-test",action="store_true",help="Whether this script should be run as a test: --stop-reward must be achieved within --stop-timesteps AND --stop-iters.")
 parser.add_argument("--stop-iters", type=int, default=2000, help="Number of iterations to train.")
-parser.add_argument("--rv-rate", type=float, default=0.2, help="RV percentage. 0.0-1.0")
+parser.add_argument("--rv-rate", type=float, default=0.6, help="RV percentage. 0.0-1.0")
 
 if __name__ == "__main__":
     args = parser.parse_args()
@@ -101,14 +101,14 @@ if __name__ == "__main__":
             # "cfg":'sumo_networks/colorado/colorado_roundabouts_singleLine.sumocfg',
             # "cfg":'real_data/osm_roundabouts_2.sumocfg',
 
-            "render":True,
+            "render":False,
             "map_xml":'sumo_networks/colorado/colorado.net.xml',
             # "map_xml":'sumo_networks/colorado/colorado_roundabouts_singleLine.net.xml',
             # "map_xml":'real_data/CSeditClean_1.net_threelegs_roundabouts_2.xml',
 
             # "rl_prob_range": [i*0.1 for i in range(5, 10)], # change RV penetration rate when reset
             "max_episode_steps":1000, #1000
-            "log_sys_usage": True,
+            # "log_sys_usage": True,
             "conflict_mechanism":'flexible',
             "traffic_light_program":{
                 "disable_state":'G',
