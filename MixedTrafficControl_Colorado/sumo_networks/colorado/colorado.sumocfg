@@ -3,4 +3,8 @@
         <net-file value="colorado.net.xml"/>
         <route-files value="colorado_1000s_3333v.rou.xml"/>
     </input>
+    <report>
+        <no-warnings value="true"/>
+        <no-step-log value="true"/>
+    </report>
 </configuration>
