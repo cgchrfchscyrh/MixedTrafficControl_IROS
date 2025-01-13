@@ -103,6 +103,8 @@ class DataMonitor(object):
         #     waiting_time = self.all_previous_global_waiting[JuncID]['sum']
         #     metric_name = f"avg_wait_{JuncID}"
         #     episode.user_data[metric_name].extend([waiting_time])
+        per_junction_avg_wait = {}
+        per_junction_throughput = {}
 
         # 遍历每个路口并统计数据
         for JuncID in all_junction_list:
@@ -117,6 +119,7 @@ class DataMonitor(object):
 
             # 累计所有路口的总数据
             total_wait.extend(junction_wait)
+            per_junction_avg_wait[JuncID] = np.mean(junction_wait)
 
             # 2. 打印当前路口的总平均等待时间
             print(f"Total avg wait time at junction {JuncID}: {np.mean(junction_wait):.2f}\n")
@@ -147,7 +150,15 @@ class DataMonitor(object):
         # 4. 打印每个路口的车流量
         print("\n--- Per junction throughput ---")
         for junc_id, count in env.junction_traffic_counts.items():
+            per_junction_throughput[junc_id] = count
             print(f"{junc_id} - Throughput: {count}")
+
+        return (
+            np.mean(total_wait),  # 整个网络的平均等待时间
+            env.total_arrived_count,  # 到达目的地的车辆数量
+            per_junction_avg_wait,  # 每个路口的平均等待时间
+            per_junction_throughput,  # 每个路口的车流量
+        )
 
     def eval_traffic_flow(self, JuncID, time_range):
         inflow_intersection = []
