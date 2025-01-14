@@ -12,7 +12,7 @@ from ray.rllib.env.multi_agent_env import MultiAgentEnv #type:ignore
 from copy import deepcopy
 from core.utils import start_edges, end_edges, dict_tolist, UNCONFLICT_SET
 from gymnasium.spaces import Discrete #type:ignore
-from core.monitor import DataMonitor
+from core.monitor_smaller import DataMonitor
 
 WHITE = (255, 255, 255)
 CYAN = (0, 255, 255)
