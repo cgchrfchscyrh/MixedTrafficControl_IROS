@@ -2,7 +2,7 @@ import argparse
 import ray #type:ignore
 from ray import air, tune #type:ignore
 from ray.rllib.algorithms.dqn import DQNConfig, DQNTorchPolicy #type:ignore
-from Env import Env
+from Env_smaller import Env
 # from ray.rllib.examples.models.shared_weights_model import ( #type:ignore
 #     SharedWeightsModel1,
 #     SharedWeightsModel2,
@@ -11,7 +11,7 @@ from Env import Env
 # )
 # from ray.rllib.utils.framework import try_import_tf #type:ignore
 from ray.rllib.utils.test_utils import check_learning_achieved #type:ignore
-from core.custom_logger import CustomLoggerCallback
+from core.custom_logger_smaller import CustomLoggerCallback
 import os
 os.environ['RAY_AIR_NEW_OUTPUT'] = '1'
 from ray.tune.experimental.output import AirVerbosity, get_air_verbosity #type:ignore
