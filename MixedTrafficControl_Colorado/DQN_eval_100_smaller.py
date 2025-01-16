@@ -3,7 +3,7 @@ import numpy as np
 from ray.rllib.algorithms.algorithm import Algorithm
 import argparse
 import ray
-from Env import Env
+from Env_smaller import Env
 from collections import defaultdict
 
 parser = argparse.ArgumentParser()
