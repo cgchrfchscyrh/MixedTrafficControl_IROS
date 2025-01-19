@@ -55,15 +55,39 @@ class DataMonitor(object):
             [len(env.conflict_vehids)/len(env.previous_action) if len(env.previous_action) else 0]
             )
 
-    def evaluate(self, min_step = 500, max_step = 1000):
+    # def evaluate(self, min_step = 500, max_step = 1000):
+    #     total_wait = []
+    #     for JuncID in self.junction_list:
+    #         for keyword in self.keywords_order:
+    #             avg_wait = np.mean(self.data_record[JuncID][keyword]['queue_wait'][min_step:max_step])
+    #             total_wait.extend([avg_wait])
+    #             print("Avg waiting time at" + JuncID +" "+keyword+": "+str(avg_wait))
+    #         print("Total avg wait time at junction "+JuncID+": " +str(np.mean(total_wait)))
+        
+    def evaluate(self, min_step=500, max_step=1000):
         total_wait = []
+        per_junction_avg_wait = {}  # Store average waiting time for each junction
+
         for JuncID in self.junction_list:
+            junction_wait = []  # Temporary list to store wait times for the current junction
             for keyword in self.keywords_order:
                 avg_wait = np.mean(self.data_record[JuncID][keyword]['queue_wait'][min_step:max_step])
-                total_wait.extend([avg_wait])
-                print("Avg waiting time at" + JuncID +" "+keyword+": "+str(avg_wait))
-            print("Total avg wait time at junction "+JuncID+": " +str(np.mean(total_wait)))
-        
+                junction_wait.append(avg_wait)  # Append to the current junction's wait times
+                print(f"Avg waiting time at {JuncID} {keyword}: {avg_wait:.2f}")
+            
+            # Calculate the average waiting time for the current junction
+            per_junction_avg_wait[JuncID] = np.mean(junction_wait)
+            print(f"Total avg wait time at junction {JuncID}: {per_junction_avg_wait[JuncID]:.2f}")
+            
+            # Add the current junction's wait times to the overall total wait
+            total_wait.extend(junction_wait)
+
+        # Print and return the overall average wait time
+        overall_avg_wait = np.mean(total_wait)
+        print(f"\nOverall Average Wait Time: {overall_avg_wait:.2f}")
+
+        # Return the overall average wait time and per-junction average wait times
+        return overall_avg_wait, per_junction_avg_wait
 
     def eval_traffic_flow(self, JuncID, time_range):
         inflow_intersection = []
