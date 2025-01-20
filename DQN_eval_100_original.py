@@ -82,7 +82,7 @@ if __name__ == "__main__":
             if dones['__all__']:
                 obs, info = env.reset()
 
-        avg_wait, per_junction_avg_wait = env.monitor.evaluate(env)
+        avg_wait, per_junction_avg_wait = env.monitor.evaluate()
 
         # Append junction-level results
         for junc_id, avg_wait_time in per_junction_avg_wait.items():
