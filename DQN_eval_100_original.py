@@ -1,9 +1,9 @@
-import time
+import time, json
 import numpy as np
 from ray.rllib.algorithms.algorithm import Algorithm
 import argparse
 import ray
-from Env import Env
+from Env_original import Env
 from collections import defaultdict
 
 parser = argparse.ArgumentParser()
@@ -21,7 +21,7 @@ parser.add_argument(
     "--model-dir", type=str, required=True, help="path to the RL model for evaluation"
 )
 parser.add_argument(
-    "--save-dir", type=str, required=False, help="folder directory for saving evaluation results"
+    "--save-dir", type=str, required=True, help="folder directory for saving evaluation results"
 )
 parser.add_argument(
     "--rv-rate", type=float, default=0.6, help="RV percentage. 0.0-1.0"
@@ -61,10 +61,14 @@ if __name__ == "__main__":
 
     results = []
     all_junction_wait_times = defaultdict(list)
+    # Data storage structure
+    evaluation_data = {}
+    vehicle_path_data_collection = {}
 
     start_time = time.time()
-    for i in range(100):
-        print(f"{rv_rate}: Starting evaluation {i + 1}/100...")
+    times = 10
+    for i in range(times):
+        print(f"{rv_rate}: Starting evaluation {i + 1}/{times}...")
         evaluation_start = time.time()
         dones = truncated = {}
         dones['__all__'] = truncated['__all__'] = False
@@ -82,6 +86,20 @@ if __name__ == "__main__":
             if dones['__all__']:
                 obs, info = env.reset()
 
+        # Collect statistics for each junction
+        run_key = f"run_{i + 1}"
+        evaluation_data[run_key] = {"junctions": {}}
+        for junc_id in env.junction_list:
+            junction_stats = env.get_junction_stats(junc_id)  # Assumes a method returning stats per junction
+            evaluation_data[run_key]["junctions"][junc_id] = {
+                "total_vehicles": junction_stats["total_vehicles"],
+                "vehicle_types": junction_stats["vehicle_types"],
+                "from_to_lines": junction_stats["from_to_lines"]
+            }
+
+        # Store vehicle_path_data for this run
+        vehicle_path_data_collection[run_key] = env.vehicle_path_data
+
         avg_wait, per_junction_avg_wait = env.monitor.evaluate()
 
         # Append junction-level results
@@ -91,10 +109,18 @@ if __name__ == "__main__":
         # Append overall results
         results.append((avg_wait))
         evaluation_time = time.time() - evaluation_start
-        print(f"{rv_rate}: Evaluation {i + 1}/100 completed: avg_wait={avg_wait}, time={evaluation_time:.2f}s")
+        print(f"{rv_rate}: Evaluation {i + 1}/{times} completed: avg_wait={avg_wait}, time={evaluation_time:.2f}s")
+
+    # Save all evaluation data to a single JSON file
+    with open(f"{args.save_dir}/evaluation_results.json", "w") as json_file:
+        json.dump(evaluation_data, json_file, indent=4)
+
+    # Save vehicle path data
+    with open(f"{args.save_dir}/vehicle_path_data.json", "w") as json_file:
+        json.dump(vehicle_path_data_collection, json_file, indent=4)
 
     total_time = time.time() - start_time
-    print(f"\n{rv_rate}: 100 evaluations completed in {total_time:.2f}s.")
+    print(f"\n{rv_rate}: {times} evaluations completed in {total_time:.2f}s.")
 
     # Unified statistics function
     def compute_stats(data, name):
