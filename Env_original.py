@@ -78,7 +78,9 @@ class Env(MultiAgentEnv):
         self.incoming_vehicle_history = {junc: set() for junc in self.junction_list}
         self.outgoing_vehicle_history = {junc: set() for junc in self.junction_list}
 
-        self.junction_vehicle_types = {junc_id: {'RL': 0, 'IDM': 0} for junc_id in self.junction_list}
+        # self.junction_vehicle_types = {junc_id: {'RL': 0, 'IDM': 0} for junc_id in self.junction_list}
+        self.incoming_vehicle_types = {junc_id: {'RL': 0, 'IDM': 0} for junc_id in self.junction_list}
+        self.outgoing_vehicle_types = {junc_id: {'RL': 0, 'IDM': 0} for junc_id in self.junction_list}
 
         self.vehicle_path_data = {}
 
