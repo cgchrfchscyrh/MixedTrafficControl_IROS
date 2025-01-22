@@ -291,25 +291,18 @@ class Env(MultiAgentEnv):
         self.head_of_control_queue = dict()
         self.inner_speed = dict()
 
-        # for JuncID in all_junction_list:
-        #     self.queue[JuncID] = dict()
-        #     self.queue_waiting_time[JuncID] = dict()
-        #     for keyword in self.keywords_order:
-        #         self.queue[JuncID][keyword] = []
-        #         self.queue_waiting_time[JuncID][keyword] = []
-
         for JuncID in self.junction_list:
             self.control_queue[JuncID] = dict()
             self.control_queue_waiting_time[JuncID] = dict()
-            # self.queue[JuncID] = dict()
-            # self.queue_waiting_time[JuncID] = dict()
+            self.queue[JuncID] = dict()
+            self.queue_waiting_time[JuncID] = dict()
             self.head_of_control_queue[JuncID] = dict()
             self.inner_speed[JuncID] = []
             for keyword in self.keywords_order:
                 self.control_queue[JuncID][keyword] = []
                 self.control_queue_waiting_time[JuncID][keyword] = []
-                # self.queue[JuncID][keyword] = []
-                # self.queue_waiting_time[JuncID][keyword] = []
+                self.queue[JuncID][keyword] = []
+                self.queue_waiting_time[JuncID][keyword] = []
                 self.head_of_control_queue[JuncID][keyword] = []
 
         ## global reward related        
