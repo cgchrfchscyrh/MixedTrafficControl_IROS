@@ -47,7 +47,7 @@ class Env(MultiAgentEnv):
             self._max_episode_steps = self.config['max_episode_steps']
         self.traffic_light_program = self.config['traffic_light_program']
 
-        self.control_junction_list = self.config['junction_list']
+        self.junction_list = self.config['junction_list']
         self.sumo_interface = SUMO(self.cfg, render=self.config['render'])
 
         self.map = NetMap(self.map_xml, all_junction_list)
@@ -81,13 +81,13 @@ class Env(MultiAgentEnv):
         self.all_junction_outgoing_edges = {}  # 存储每个路口的出边
         # self.junction_traffic_counts = {junc: 0 for junc in all_junction_list}
         # self.junction_vehicle_history = {junc: set() for junc in all_junction_list}  # 每个路口的车辆历史记录
-        self.incoming_traffic_counts = {junc: 0 for junc in self.control_junction_list}
-        self.outgoing_traffic_counts = {junc: 0 for junc in self.control_junction_list}
+        self.incoming_traffic_counts = {junc: 0 for junc in self.junction_list}
+        self.outgoing_traffic_counts = {junc: 0 for junc in self.junction_list}
 
-        self.incoming_vehicle_history = {junc: set() for junc in self.control_junction_list}
-        self.outgoing_vehicle_history = {junc: set() for junc in self.control_junction_list}
+        self.incoming_vehicle_history = {junc: set() for junc in self.junction_list}
+        self.outgoing_vehicle_history = {junc: set() for junc in self.junction_list}
 
-        self.junction_vehicle_types = {junc_id: {'RL': 0, 'IDM': 0} for junc_id in self.control_junction_list}
+        self.junction_vehicle_types = {junc_id: {'RL': 0, 'IDM': 0} for junc_id in self.junction_list}
 
         self.vehicle_path_data = {}
 
@@ -114,7 +114,7 @@ class Env(MultiAgentEnv):
                 self.all_previous_global_waiting[JuncID][keyword] = 0
                 self.all_previous_global_waiting[JuncID]['sum'] = 0
         
-        for JuncID in self.control_junction_list:
+        for JuncID in self.junction_list:
             self.previous_global_waiting[JuncID] = dict() # 与global reward和conflict mechanism相关
             self.global_obs[JuncID] = 0 # global_obs实际上即为global reward的值，但paper中并未采用global reward，只用了ego_reward
             for keyword in self.keywords_order:
@@ -222,7 +222,7 @@ class Env(MultiAgentEnv):
                 }
 
             # 遍历控制路口，检查车辆是否在这些路口的 incoming 或 outgoing edges 上
-            for junc_id in self.control_junction_list:
+            for junc_id in self.junction_list:
                 # 检查是否在当前路口的 incoming edges 上
                 if current_edge_id in self.all_junction_incoming_edges[junc_id]:
                     if current_edge_id not in self.vehicle_path_data[veh_id]["incoming_edges"]:
@@ -283,7 +283,7 @@ class Env(MultiAgentEnv):
         self.inner_lane_obs = dict()
         self.inner_lane_occmap = dict()
         self.inner_lane_newly_enter = dict()
-        for JuncID in self.control_junction_list:
+        for JuncID in self.junction_list:
             self.inner_lane_obs[JuncID] = dict()
             self.inner_lane_newly_enter[JuncID] = dict()
             self.inner_lane_occmap[JuncID] = dict()
@@ -307,7 +307,7 @@ class Env(MultiAgentEnv):
                 self.queue[JuncID][keyword] = []
                 self.queue_waiting_time[JuncID][keyword] = []
 
-        for JuncID in self.control_junction_list:
+        for JuncID in self.junction_list:
             self.control_queue[JuncID] = dict()
             self.control_queue_waiting_time[JuncID] = dict()
             # self.queue[JuncID] = dict()
@@ -323,7 +323,7 @@ class Env(MultiAgentEnv):
 
         ## global reward related        
         self.previous_global_waiting = dict()
-        for JuncID in self.control_junction_list:
+        for JuncID in self.junction_list:
             self.previous_global_waiting[JuncID] = dict()
             for keyword in self.keywords_order:
                 self.previous_global_waiting[JuncID][keyword] = 0
@@ -548,7 +548,7 @@ class Env(MultiAgentEnv):
 
     def _update_obs(self):
         # clear the queues
-        for JuncID in self.control_junction_list:
+        for JuncID in self.junction_list:
             self.inner_speed[JuncID] = []
             for keyword in self.keywords_order:
                 self.control_queue[JuncID][keyword] = []
@@ -561,7 +561,7 @@ class Env(MultiAgentEnv):
         self.inner_lane_obs = dict()
         self.inner_lane_occmap = dict()
         self.inner_lane_newly_enter = dict()
-        for JuncID in self.control_junction_list:
+        for JuncID in self.junction_list:
             self.inner_lane_obs[JuncID] = dict()
             self.inner_lane_newly_enter[JuncID] = dict()
             self.inner_lane_occmap[JuncID] = dict()
@@ -609,7 +609,7 @@ class Env(MultiAgentEnv):
                     if veh.road_id[len(veh.road_id)-1-ind] == '_':
                         break
                 last_dash_ind = len(veh.road_id)-1-ind
-                if edge_label and veh.road_id[1:last_dash_ind] in self.control_junction_list:
+                if edge_label and veh.road_id[1:last_dash_ind] in self.junction_list:
                     self.inner_lane_obs[veh.road_id[1:last_dash_ind]][edge_label+direction].extend([veh])
                     self.inner_lane_occmap[veh.road_id[1:last_dash_ind]][edge_label+direction][min(int(10*veh.laneposition/self.map.edge_length(veh.road_id)), 9)] = 1
                     if veh not in self.prev_inner[veh.road_id[1:last_dash_ind]][edge_label+direction]:
@@ -650,7 +650,7 @@ class Env(MultiAgentEnv):
                     self.queue[JuncID][keyword].extend([veh])
                     self.queue_waiting_time[JuncID][keyword].extend([self.veh_waiting_juncs[veh.id][JuncID]])
                     
-                    if veh.type == 'RL' and JuncID in self.control_junction_list:
+                    if veh.type == 'RL' and JuncID in self.junction_list:
                         self.control_queue[JuncID][keyword].extend([veh])
                         self.control_queue_waiting_time[JuncID][keyword].extend([self.veh_waiting_juncs[veh.id][JuncID]])
 
@@ -669,7 +669,7 @@ class Env(MultiAgentEnv):
             self.all_previous_global_waiting[JuncID]['sum'] = weighted_sum
 
         ## update previous global waiting for next step reward calculation
-        for JuncID in self.control_junction_list:
+        for JuncID in self.junction_list:
             weighted_sum = 0
             largest = 0
             for Keyword in self.keywords_order:
@@ -826,7 +826,7 @@ class Env(MultiAgentEnv):
                     ## then do nothing
                     continue
             JuncID, ego_dir = self.map.get_veh_moving_direction(rl_veh)
-            if len(JuncID) == 0 or JuncID not in self.control_junction_list:
+            if len(JuncID) == 0 or JuncID not in self.junction_list:
                 # skip the invalid JuncID 
                 continue
         
