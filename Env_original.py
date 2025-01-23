@@ -198,7 +198,7 @@ class Env(MultiAgentEnv):
 
     def update_traffic_flow(self):
         """
-        在每个时间步调用，分别更新到达路口和经过路口的车流量
+        在每个时间步调用，分别更新到达路口和经过路口的车流量，同时记录车辆的 origin 和 destination lane
         """
         # 遍历所有路口的incoming edges
         for junc_id, incoming_edges in self.all_junction_incoming_edges.items():
@@ -213,6 +213,14 @@ class Env(MultiAgentEnv):
                     # 如果 origin 尚未记录，设置为当前 lane
                     if self.vehicle_lane_stats[junc_id][veh_id]["origin"] is None:
                         self.vehicle_lane_stats[junc_id][veh_id]["origin"] = current_lane_id
+                    
+                    # 如果车辆尚未被统计，记录到达路口信息
+                    if veh_id not in self.incoming_vehicle_history[junc_id]:
+                        self.incoming_vehicle_history[junc_id].add(veh_id)
+                        self.incoming_traffic_counts[junc_id] += 1
+
+                        # 获取车辆类型
+                        self.incoming_vehicle_types[junc_id][self.vehicles[veh_id].type] += 1
 
         # 遍历所有路口的outgoing edges
         for junc_id, outgoing_edges in self.all_junction_outgoing_edges.items():
@@ -222,7 +230,6 @@ class Env(MultiAgentEnv):
                 for veh_id in vehicle_ids:
                     current_lane_id = traci.vehicle.getLaneID(veh_id)
                     # 如果车辆已经有记录，更新 destination
-                    # if veh_id in self.vehicle_lane_stats[junc_id]:
                     self.vehicle_lane_stats[junc_id][veh_id]["destination"] = current_lane_id
 
     def update_vehicle_path_data(self):
