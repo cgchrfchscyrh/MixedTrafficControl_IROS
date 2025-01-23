@@ -1,4 +1,4 @@
-import time, json
+import time, json, datetime
 import numpy as np
 from ray.rllib.algorithms.algorithm import Algorithm
 import argparse
@@ -52,7 +52,7 @@ if __name__ == "__main__":
             "render":False,
             "map_xml":'real_data/CSeditClean_1.net_threelegs.xml',
             "max_episode_steps":args.stop_timesteps,
-            "conflict_mechanism":'off',
+            "conflict_mechanism": 'flexible',
             "traffic_light_program":{
                 "disable_state":'G',
                 "disable_light_start":0
@@ -66,7 +66,7 @@ if __name__ == "__main__":
     vehicle_path_data_collection = {}
 
     start_time = time.time()
-    times = 1
+    times = 100
     for i in range(times):
         print(f"{rv_rate}: Starting evaluation {i + 1}/{times}...")
         evaluation_start = time.time()
@@ -111,17 +111,23 @@ if __name__ == "__main__":
         evaluation_time = time.time() - evaluation_start
         print(f"{rv_rate}: Evaluation {i + 1}/{times} completed: avg_wait={avg_wait}, time={evaluation_time:.2f}s")
 
-    print("Saving all evaluation data to a single JSON file")
-    with open(f"{args.save_dir}/evaluation_results.json", "w") as json_file:
+    # 获取当前时间的时间戳
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+
+    print("Smaller: Saving all evaluation data to a single JSON file")
+    # 文件名中加入时间戳
+    with open(f"{args.save_dir}/evaluation_results_{timestamp}.json", "w") as json_file:
         json.dump(evaluation_data, json_file, indent=4)
 
+    # 将每次运行的数据结构中的集合转换为列表，以便 JSON 序列化
     for run_key, vehicle_data in vehicle_path_data_collection.items():
         for veh_id, path_data in vehicle_data.items():
             path_data["incoming_lanes"] = list(path_data["incoming_lanes"])
             path_data["outgoing_lanes"] = list(path_data["outgoing_lanes"])
 
-    print("Saving vehicle path data")
-    with open(f"{args.save_dir}/vehicle_path_data.json", "w") as json_file:
+    print("Smaller: Saving vehicle path data")
+    # 另一个文件名也加入时间戳
+    with open(f"{args.save_dir}/vehicle_path_data_{timestamp}.json", "w") as json_file:
         json.dump(vehicle_path_data_collection, json_file, indent=4)
 
     total_time = time.time() - start_time
