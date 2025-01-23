@@ -79,8 +79,8 @@ class Env(MultiAgentEnv):
         self.outgoing_vehicle_history = {junc: set() for junc in self.junction_list}
 
         # self.junction_vehicle_types = {junc_id: {'RL': 0, 'IDM': 0} for junc_id in self.junction_list}
-        self.incoming_vehicle_types = {junc_id: {'RL': 0, 'IDM': 0} for junc_id in self.junction_list}
-        self.outgoing_vehicle_types = {junc_id: {'RL': 0, 'IDM': 0} for junc_id in self.junction_list}
+        self.incoming_vehicle_types = {junc_id: {"RL": 0, "IDM": 0} for junc_id in self.junction_list}
+        self.outgoing_vehicle_types = {junc_id: {"RL": 0, "IDM": 0} for junc_id in self.junction_list}
 
         self.vehicle_path_data = {}
 
@@ -170,9 +170,10 @@ class Env(MultiAgentEnv):
                         self.incoming_traffic_counts[junc_id] += 1
 
                         # 获取车辆类型
-                        veh_type = traci.vehicle.getTypeID(veh_id)
-                        if veh_type in self.incoming_vehicle_types[junc_id]:
-                            self.incoming_vehicle_types[junc_id][veh_type] += 1
+                        # veh_type = traci.vehicle.getTypeID(veh_id)
+                        
+                        # if self.vehicles[veh_id].type in self.incoming_vehicle_types[junc_id]:
+                        self.incoming_vehicle_types[junc_id][self.vehicles[veh_id].type] += 1
 
         # 遍历所有路口的outgoing edges
         for junc_id, outgoing_edges in self.all_junction_outgoing_edges.items():
@@ -246,7 +247,8 @@ class Env(MultiAgentEnv):
             # 统计每种 (incoming, outgoing) 组合出现的次数
             for inc_edge in incoming_edges:
                 for out_edge in outgoing_edges:
-                    pair_key = (inc_edge, out_edge)
+                    # Convert tuple keys to string keys
+                    pair_key = f"{inc_edge}-{out_edge}"
                     from_to_lines[pair_key] = from_to_lines.get(pair_key, 0) + 1
 
         return {
