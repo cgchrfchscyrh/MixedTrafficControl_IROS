@@ -66,7 +66,7 @@ if __name__ == "__main__":
     vehicle_path_data_collection = {}
 
     start_time = time.time()
-    times = 100
+    times = 2
     for i in range(times):
         print(f"{rv_rate}: Starting evaluation {i + 1}/{times}...")
         evaluation_start = time.time()
@@ -114,7 +114,7 @@ if __name__ == "__main__":
     # 获取当前时间的时间戳
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 
-    print("Smaller: Saving all evaluation data to a single JSON file")
+    print("Original: Saving all evaluation data to a single JSON file")
     # 文件名中加入时间戳
     with open(f"{args.save_dir}/evaluation_results_{timestamp}.json", "w") as json_file:
         json.dump(evaluation_data, json_file, indent=4)
@@ -125,7 +125,7 @@ if __name__ == "__main__":
             path_data["incoming_lanes"] = list(path_data["incoming_lanes"])
             path_data["outgoing_lanes"] = list(path_data["outgoing_lanes"])
 
-    print("Smaller: Saving vehicle path data")
+    print("Original: Saving vehicle path data")
     # 另一个文件名也加入时间戳
     with open(f"{args.save_dir}/vehicle_path_data_{timestamp}.json", "w") as json_file:
         json.dump(vehicle_path_data_collection, json_file, indent=4)
