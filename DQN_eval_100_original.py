@@ -94,7 +94,7 @@ if __name__ == "__main__":
             evaluation_data[run_key]["junctions"][junc_id] = {
                 "total_vehicles": junction_stats["total_vehicles"],
                 "vehicle_types": junction_stats["vehicle_types"],
-                "from_to_lanes": junction_stats["from_to_lanes"]
+                "vehicle_paths": junction_stats["vehicle_paths"]
             }
 
         # Store vehicle_path_data for this run
