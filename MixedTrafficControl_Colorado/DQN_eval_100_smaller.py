@@ -91,7 +91,20 @@ if __name__ == "__main__":
                     obs.pop(key)
             if dones['__all__']:
                 obs, info = env.reset()
+                
+        # Collect statistics for each junction
+        run_key = f"run_{i + 1}"
+        evaluation_data[run_key] = {"junctions": {}}
+        for junc_id in env.junction_list:
+            junction_stats = env.get_junction_stats(junc_id)  # Assumes a method returning stats per junction
+            evaluation_data[run_key]["junctions"][junc_id] = {
+                "total_vehicles": junction_stats["total_vehicles"],
+                "vehicle_types": junction_stats["vehicle_types"],
+                "vehicle_paths": junction_stats["vehicle_paths"]
+            }
 
+        # Store vehicle_path_data for this run
+        vehicle_path_data_collection[run_key] = env.vehicle_path_data
         avg_wait, total_arrived, per_junction_avg_wait, per_junction_throughput = env.monitor.evaluate(env)
 
         # Append junction-level results
@@ -106,7 +119,7 @@ if __name__ == "__main__":
         print(f"Smaller {rv_rate}: Evaluation {i + 1}/{times} completed: avg_wait={avg_wait}, total_arrived={total_arrived}, time={evaluation_time:.2f}s")
     
     # 获取当前时间的时间戳
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
 
     print("Smaller: Saving all evaluation data to a single JSON file")
     # 文件名中加入时间戳
