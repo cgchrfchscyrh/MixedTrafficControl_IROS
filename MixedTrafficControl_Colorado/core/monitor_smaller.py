@@ -22,7 +22,7 @@ class DataMonitor(object):
         # self.veh_waiting_juncs = env.veh_waiting_juncs
         # self.all_previous_global_waiting = env.all_previous_global_waiting
         # self.total_arrived_count = env.total_arrived_count
-        self.junction_traffic_counts = env.junction_traffic_counts
+        # self.junction_traffic_counts = env.junction_traffic_counts
         self.clear_data()
 
     def clear_data(self):
