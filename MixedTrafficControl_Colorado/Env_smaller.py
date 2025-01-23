@@ -79,15 +79,16 @@ class Env(MultiAgentEnv):
         # self.junction_traffic_throughput = {JuncID: 0 for JuncID in all_junction_list}
         self.all_junction_incoming_edges = {}  # 存储每个路口的入边
         self.all_junction_outgoing_edges = {}  # 存储每个路口的出边
-        # self.junction_traffic_counts = {junc: 0 for junc in all_junction_list}
-        # self.junction_vehicle_history = {junc: set() for junc in all_junction_list}  # 每个路口的车辆历史记录
+        
         self.incoming_traffic_counts = {junc: 0 for junc in self.junction_list}
         self.outgoing_traffic_counts = {junc: 0 for junc in self.junction_list}
 
         self.incoming_vehicle_history = {junc: set() for junc in self.junction_list}
         self.outgoing_vehicle_history = {junc: set() for junc in self.junction_list}
 
-        self.junction_vehicle_types = {junc_id: {'RL': 0, 'IDM': 0} for junc_id in self.junction_list}
+        # self.junction_vehicle_types = {junc_id: {'RL': 0, 'IDM': 0} for junc_id in self.junction_list}
+        self.incoming_vehicle_types = {junc_id: {"RL": 0, "IDM": 0} for junc_id in self.junction_list}
+        self.outgoing_vehicle_types = {junc_id: {"RL": 0, "IDM": 0} for junc_id in self.junction_list}
 
         self.vehicle_path_data = {}
 
@@ -96,10 +97,15 @@ class Env(MultiAgentEnv):
         self.all_previous_global_waiting = dict()
         self.global_obs = dict()
 
-        # 初始化每个路口的 outgoing edges
-        for junc_id in all_junction_list:
-            self.all_junction_incoming_edges[junc_id] = traci.junction.getIncomingEdges(junc_id)
-            self.all_junction_outgoing_edges[junc_id] = traci.junction.getOutgoingEdges(junc_id)
+        # 初始化每个路口的 incoming 和 outgoing edges，但排除掉以 ":" 开头的内部 ID
+        for junc_id in self.junction_list:
+            # 获取并过滤 incoming edges
+            all_incoming = traci.junction.getIncomingEdges(junc_id)
+            self.all_junction_incoming_edges[junc_id] = [edge for edge in all_incoming if not edge.startswith(":")]
+
+            # 获取并过滤 outgoing edges
+            all_outgoing = traci.junction.getOutgoingEdges(junc_id)
+            self.all_junction_outgoing_edges[junc_id] = [edge for edge in all_outgoing if not edge.startswith(":")]
 
         # 初始化每个 edge 的车辆历史
         # for junc_id, outgoing_edges in self.all_junction_outgoing_edges.items():
@@ -177,9 +183,7 @@ class Env(MultiAgentEnv):
                         self.incoming_traffic_counts[junc_id] += 1
 
                         # 获取车辆类型
-                        veh_type = traci.vehicle.getTypeID(veh_id)
-                        if veh_type in self.incoming_vehicle_types[junc_id]:
-                            self.incoming_vehicle_types[junc_id][veh_type] += 1
+                        self.incoming_vehicle_types[junc_id][self.vehicles[veh_id].type] += 1
 
         # 遍历所有路口的outgoing edges
         for junc_id, outgoing_edges in self.all_junction_outgoing_edges.items():
@@ -199,7 +203,8 @@ class Env(MultiAgentEnv):
 
     def update_vehicle_path_data(self):
         """
-        记录每辆车当前所在的路段和车道，并分类为 incoming edges 或 outgoing edges。
+        记录每辆车当前所在的路段和车道，并分类为 incoming edges 或 outgoing edges
+        仅在车辆位于控制路口的相关边时保存数据。
         """
         # 获取当前所有车辆的ID
         vehicle_ids = traci.vehicle.getIDList()
@@ -210,28 +215,33 @@ class Env(MultiAgentEnv):
             current_edge_id = traci.vehicle.getRoadID(veh_id)
             current_lane_id = traci.vehicle.getLaneID(veh_id)
 
-            # 如果没有获取到有效的边或车道，跳过
-            if not current_edge_id or not current_lane_id:
+            # 如果当前边不属于任何控制路口的 incoming 或 outgoing edges，跳过
+            is_control_edge = False
+            for junc_id in self.junction_list:
+                if (current_edge_id in self.all_junction_incoming_edges[junc_id] or 
+                    current_edge_id in self.all_junction_outgoing_edges[junc_id]):
+                    is_control_edge = True
+                    break
+
+            if not is_control_edge:
                 continue
 
             # 初始化车辆路径记录
             if veh_id not in self.vehicle_path_data:
                 self.vehicle_path_data[veh_id] = {
-                    "incoming_edges": [],
-                    "outgoing_edges": []
+                    "incoming_lanes": set(),
+                    "outgoing_lanes": set()
                 }
 
             # 遍历控制路口，检查车辆是否在这些路口的 incoming 或 outgoing edges 上
             for junc_id in self.junction_list:
                 # 检查是否在当前路口的 incoming edges 上
                 if current_edge_id in self.all_junction_incoming_edges[junc_id]:
-                    if current_edge_id not in self.vehicle_path_data[veh_id]["incoming_edges"]:
-                        self.vehicle_path_data[veh_id]["incoming_edges"].append(current_edge_id)
+                    self.vehicle_path_data[veh_id]["incoming_lanes"].add(current_lane_id)
                 
                 # 检查是否在当前路口的 outgoing edges 上
                 if current_edge_id in self.all_junction_outgoing_edges[junc_id]:
-                    if current_edge_id not in self.vehicle_path_data[veh_id]["outgoing_edges"]:
-                        self.vehicle_path_data[veh_id]["outgoing_edges"].append(current_edge_id)
+                    self.vehicle_path_data[veh_id]["outgoing_lanes"].add(current_lane_id)
 
     def get_junction_stats(self, junc_id):
         """
@@ -244,22 +254,23 @@ class Env(MultiAgentEnv):
         vehicle_types = self.incoming_vehicle_types.get(junc_id, {"RL": 0, "IDM": 0})
 
         # 到达路口的每辆车的来源和去向
-        from_to_lines = {}
+        from_to_lanes = {}
         for veh_id in self.incoming_vehicle_history.get(junc_id, set()):
             vehicle_data = self.vehicle_path_data.get(veh_id, {})
             # 获取该车到达的incoming edges和最终经过的outgoing edges
-            incoming_edges = vehicle_data.get("incoming_edges", [])
-            outgoing_edges = vehicle_data.get("outgoing_edges", [])
+            incoming_lanes = vehicle_data.get("incoming_lanes", [])
+            outgoing_lanes = vehicle_data.get("outgoing_lanes", [])
             # 统计每种 (incoming, outgoing) 组合出现的次数
-            for inc_edge in incoming_edges:
-                for out_edge in outgoing_edges:
-                    pair_key = (inc_edge, out_edge)
-                    from_to_lines[pair_key] = from_to_lines.get(pair_key, 0) + 1
+            for inc_lane in incoming_lanes:
+                for out_lane in outgoing_lanes:
+                    # Convert tuple keys to string keys
+                    pair_key = f"{inc_lane}-{out_lane}"
+                    from_to_lanes[pair_key] = from_to_lanes.get(pair_key, 0) + 1
 
         return {
             "total_vehicles": total_vehicles,
             "vehicle_types": vehicle_types,
-            "from_to_lines": from_to_lines
+            "from_to_lanes": from_to_lanes
         }
 
     def init_env(self):
@@ -808,6 +819,7 @@ class Env(MultiAgentEnv):
         self._update_obs()
 
         self.update_traffic_flow()
+        self.update_vehicle_path_data()
 
         obs = {}
         rewards = {}
