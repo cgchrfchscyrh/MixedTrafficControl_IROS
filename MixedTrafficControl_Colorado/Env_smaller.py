@@ -197,9 +197,7 @@ class Env(MultiAgentEnv):
                         self.outgoing_traffic_counts[junc_id] += 1
 
                         # 获取车辆类型
-                        veh_type = traci.vehicle.getTypeID(veh_id)
-                        if veh_type in self.outgoing_vehicle_types[junc_id]:
-                            self.outgoing_vehicle_types[junc_id][veh_type] += 1
+                        self.outgoing_vehicle_types[junc_id][self.vehicles[veh_id].type] += 1
 
     def update_vehicle_path_data(self):
         """
@@ -933,6 +931,16 @@ class Env(MultiAgentEnv):
     def reset(self, *, seed=None, options=None):
         # self._print_debug('reset')
         # soft reset
+        # 清空每次评估需要重新记录的数据
+        self.incoming_traffic_counts = {junc: 0 for junc in self.junction_list}
+        self.outgoing_traffic_counts = {junc: 0 for junc in self.junction_list}
+        self.incoming_vehicle_history = {junc: set() for junc in self.junction_list}
+        self.outgoing_vehicle_history = {junc: set() for junc in self.junction_list}
+        self.incoming_vehicle_types = {junc_id: {"RL": 0, "IDM": 0} for junc_id in self.junction_list}
+        self.outgoing_vehicle_types = {junc_id: {"RL": 0, "IDM": 0} for junc_id in self.junction_list}
+
+        self.vehicle_path_data = {}
+
         self.total_arrived_count = 0
 
         while not self.sumo_interface.reset_sumo():
