@@ -221,21 +221,19 @@ class Env(MultiAgentEnv):
             # 初始化车辆路径记录
             if veh_id not in self.vehicle_path_data:
                 self.vehicle_path_data[veh_id] = {
-                    "incoming_lanes": [],
-                    "outgoing_lanes": []
+                    "incoming_lanes": set(),
+                    "outgoing_lanes": set()
                 }
 
             # 遍历控制路口，检查车辆是否在这些路口的 incoming 或 outgoing edges 上
             for junc_id in self.junction_list:
                 # 检查是否在当前路口的 incoming edges 上
                 if current_edge_id in self.all_junction_incoming_edges[junc_id]:
-                    if current_edge_id not in self.vehicle_path_data[veh_id]["incoming_lanes"]:
-                        self.vehicle_path_data[veh_id]["incoming_lanes"].append(current_lane_id)
+                    self.vehicle_path_data[veh_id]["incoming_lanes"].add(current_lane_id)
                 
                 # 检查是否在当前路口的 outgoing edges 上
                 if current_edge_id in self.all_junction_outgoing_edges[junc_id]:
-                    if current_edge_id not in self.vehicle_path_data[veh_id]["outgoing_lanes"]:
-                        self.vehicle_path_data[veh_id]["outgoing_lanes"].append(current_lane_id)
+                    self.vehicle_path_data[veh_id]["outgoing_lanes"].add(current_lane_id)
 
     def get_junction_stats(self, junc_id):
         """
