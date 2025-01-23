@@ -66,7 +66,7 @@ if __name__ == "__main__":
     vehicle_path_data_collection = {}
 
     start_time = time.time()
-    times = 100
+    times = 1
     for i in range(times):
         print(f"{rv_rate}: Starting evaluation {i + 1}/{times}...")
         evaluation_start = time.time()
@@ -114,6 +114,11 @@ if __name__ == "__main__":
     print("Saving all evaluation data to a single JSON file")
     with open(f"{args.save_dir}/evaluation_results.json", "w") as json_file:
         json.dump(evaluation_data, json_file, indent=4)
+
+    for run_key, vehicle_data in vehicle_path_data_collection.items():
+        for veh_id, path_data in vehicle_data.items():
+            path_data["incoming_lanes"] = list(path_data["incoming_lanes"])
+            path_data["outgoing_lanes"] = list(path_data["outgoing_lanes"])
 
     print("Saving vehicle path data")
     with open(f"{args.save_dir}/vehicle_path_data.json", "w") as json_file:
