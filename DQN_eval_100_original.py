@@ -49,7 +49,7 @@ if __name__ == "__main__":
             "spawn_rl_prob":{},
             "probablity_RL":rv_rate,
             "cfg":'real_data/osm.sumocfg',
-            "render":True,
+            "render":False,
             "map_xml":'real_data/CSeditClean_1.net_threelegs.xml',
             "max_episode_steps":args.stop_timesteps,
             "conflict_mechanism":'off',
@@ -66,7 +66,7 @@ if __name__ == "__main__":
     vehicle_path_data_collection = {}
 
     start_time = time.time()
-    times = 10
+    times = 100
     for i in range(times):
         print(f"{rv_rate}: Starting evaluation {i + 1}/{times}...")
         evaluation_start = time.time()
@@ -94,7 +94,7 @@ if __name__ == "__main__":
             evaluation_data[run_key]["junctions"][junc_id] = {
                 "total_vehicles": junction_stats["total_vehicles"],
                 "vehicle_types": junction_stats["vehicle_types"],
-                "from_to_lines": junction_stats["from_to_lines"]
+                "from_to_lanes": junction_stats["from_to_lanes"]
             }
 
         # Store vehicle_path_data for this run
@@ -111,11 +111,11 @@ if __name__ == "__main__":
         evaluation_time = time.time() - evaluation_start
         print(f"{rv_rate}: Evaluation {i + 1}/{times} completed: avg_wait={avg_wait}, time={evaluation_time:.2f}s")
 
-    # Save all evaluation data to a single JSON file
+    print("Saving all evaluation data to a single JSON file")
     with open(f"{args.save_dir}/evaluation_results.json", "w") as json_file:
         json.dump(evaluation_data, json_file, indent=4)
 
-    # Save vehicle path data
+    print("Saving vehicle path data")
     with open(f"{args.save_dir}/vehicle_path_data.json", "w") as json_file:
         json.dump(vehicle_path_data_collection, json_file, indent=4)
 
@@ -145,7 +145,7 @@ if __name__ == "__main__":
         compute_stats(all_junction_wait_times[junc_id], f"Junction {junc_id} - Waiting Time")
 
     # Compute overall statistics
-    avg_wait_results = [r[0] for r in results]
+    avg_wait_results = [r for r in results]
 
     print(f"\n{rv_rate}: Overall Average Wait Time:")
     compute_stats(avg_wait_results, "Average Wait Time")
