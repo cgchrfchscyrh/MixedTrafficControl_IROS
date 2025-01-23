@@ -1,4 +1,4 @@
-import time
+import time, json
 import numpy as np
 from ray.rllib.algorithms.algorithm import Algorithm
 import argparse
@@ -21,7 +21,7 @@ parser.add_argument(
     "--model-dir", type=str, required=True, help="path to the RL model for evaluation"
 )
 parser.add_argument(
-    "--save-dir", type=str, required=False, help="folder directory for saving evaluation results"
+    "--save-dir", type=str, required=True, help="folder directory for saving evaluation results"
 )
 parser.add_argument(
     "--rv-rate", type=float, default=0.2, help="RV percentage. 0.0-1.0"
@@ -66,10 +66,14 @@ if __name__ == "__main__":
     results = []
     all_junction_wait_times = defaultdict(list)
     all_junction_throughputs = defaultdict(list)
-
+    # Data storage structure
+    evaluation_data = {}
+    vehicle_path_data_collection = {}
     start_time = time.time()
-    for i in range(100):
-        print(f"{rv_rate}: Starting evaluation {i + 1}/100...")
+    times = 100
+
+    for i in range(times):
+        print(f"{rv_rate}: Starting evaluation {i + 1}/{times}...")
         env.total_arrived_count = 0
         evaluation_start = time.time()
         dones = truncated = {}
@@ -80,8 +84,7 @@ if __name__ == "__main__":
         while not dones['__all__'] and not truncated['__all__']:
             actions = {}
             for agent_id, agent_obs in obs.items():
-                actions[agent_id] = algo.compute_single_action(
-                    agent_obs, explore=args.explore_during_inference, policy_id="shared_policy")
+                actions[agent_id] = algo.compute_single_action(agent_obs, explore=args.explore_during_inference, policy_id="shared_policy")
             obs, reward, dones, truncated, info = env.step(actions)
             for key, done in dones.items():
                 if done:
@@ -100,10 +103,22 @@ if __name__ == "__main__":
         # Append overall results
         results.append((avg_wait, total_arrived))
         evaluation_time = time.time() - evaluation_start
-        print(f"Smaller {rv_rate}: Evaluation {i + 1}/100 completed: avg_wait={avg_wait}, total_arrived={total_arrived}, time={evaluation_time:.2f}s")
+        print(f"Smaller {rv_rate}: Evaluation {i + 1}/{times} completed: avg_wait={avg_wait}, total_arrived={total_arrived}, time={evaluation_time:.2f}s")
+    print("Original: Saving all evaluation data to a single JSON file")
+    with open(f"{args.save_dir}/evaluation_results.json", "w") as json_file:
+        json.dump(evaluation_data, json_file, indent=4)
+
+    for run_key, vehicle_data in vehicle_path_data_collection.items():
+        for veh_id, path_data in vehicle_data.items():
+            path_data["incoming_lanes"] = list(path_data["incoming_lanes"])
+            path_data["outgoing_lanes"] = list(path_data["outgoing_lanes"])
+
+    print("Original: Saving vehicle path data")
+    with open(f"{args.save_dir}/vehicle_path_data.json", "w") as json_file:
+        json.dump(vehicle_path_data_collection, json_file, indent=4)
 
     total_time = time.time() - start_time
-    print(f"\n{rv_rate}: 100 evaluations completed in {total_time:.2f}s.")
+    print(f"\n{rv_rate}: {times} evaluations completed in {total_time:.2f}s.")
 
     # Unified statistics function
     def compute_stats(data, name, is_per_junction=False):
