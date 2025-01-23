@@ -112,7 +112,7 @@ if __name__ == "__main__":
         print(f"{rv_rate}: Evaluation {i + 1}/{times} completed: avg_wait={avg_wait}, time={evaluation_time:.2f}s")
 
     # 获取当前时间的时间戳
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
 
     print("Original: Saving all evaluation data to a single JSON file")
     # 文件名中加入时间戳
