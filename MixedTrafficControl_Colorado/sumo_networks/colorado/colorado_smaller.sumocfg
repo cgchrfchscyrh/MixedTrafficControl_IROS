@@ -1,7 +1,7 @@
 <configuration>
     <input>
         <net-file value="colorado_smaller.net.xml"/>
-        <route-files value="colorado_smaller_1000s_7911v.rou.xml"/>
+        <route-files value="colorado_smaller_1000s_7911v_1sInterval.rou.xml"/>
     </input>
     <report>
         <no-warnings value="true"/>
