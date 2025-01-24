@@ -202,8 +202,16 @@ class Env(MultiAgentEnv):
                 # 获取当前边上的车辆 ID
                 vehicle_ids = traci.edge.getLastStepVehicleIDs(edge_id)
                 for veh_id in vehicle_ids:
+                    # 如果车辆尚未被统计，记录到达路口信息
+                    if veh_id not in self.outgoing_vehicle_history[junc_id]:
+                        self.outgoing_vehicle_history[junc_id].add(veh_id)
+                        self.outgoing_traffic_counts[junc_id] += 1
+
+                        # 获取车辆类型
+                        self.outgoing_vehicle_types[junc_id][self.vehicles[veh_id].type] += 1
+
                     current_lane_id = traci.vehicle.getLaneID(veh_id)
-                    
+
                     if veh_id not in self.vehicle_lane_stats[junc_id]:
                         # 如果 veh_id 未被记录，初始化其数据
                         self.vehicle_lane_stats[junc_id][veh_id] = {"origin": None, "destination": None}
@@ -247,20 +255,23 @@ class Env(MultiAgentEnv):
                 # 检查是否在当前路口的 incoming edges 上
                 if current_edge_id in self.all_junction_incoming_edges[junc_id]:
                     self.vehicle_path_data[veh_id]["incoming_lanes"].add(current_lane_id)
-                
-                # 检查是否在当前路口的 outgoing edges 上
-                if current_edge_id in self.all_junction_outgoing_edges[junc_id]:
-                    self.vehicle_path_data[veh_id]["outgoing_lanes"].add(current_lane_id)
+                    
+                    # 检查是否在当前路口的 outgoing edges 上
+                    if current_edge_id in self.all_junction_outgoing_edges[junc_id]:
+                        self.vehicle_path_data[veh_id]["outgoing_lanes"].add(current_lane_id)
 
+        
     def get_junction_stats(self, junc_id):
         """
         获取指定路口的统计信息, 包括到达车辆总数、车辆类型分布, 以及每辆车的出发和到达lane。
         """
-        # 到达路口的车辆总数
-        total_vehicles = self.incoming_traffic_counts.get(junc_id, 0)
+        # 到达/经过路口的车辆总数
+        total_vehicles_enter = self.incoming_traffic_counts.get(junc_id, 0)
+        total_vehicles_pass = self.outgoing_traffic_counts.get(junc_id, 0)
 
-        # 到达车辆的类型分布
-        vehicle_types = self.incoming_vehicle_types.get(junc_id, {"RL": 0, "IDM": 0})
+        # 到达/经过车辆的类型分布
+        vehicle_types_enter = self.incoming_vehicle_types.get(junc_id, {"RL": 0, "IDM": 0})
+        vehicle_types_pass = self.outgoing_vehicle_types.get(junc_id, {"RL": 0, "IDM": 0})
 
         # 每辆车的来源和去向
         vehicle_paths = {}
@@ -271,8 +282,10 @@ class Env(MultiAgentEnv):
             }
 
         return {
-            "total_vehicles": total_vehicles,
-            "vehicle_types": vehicle_types,
+            "total_vehicles_enter": total_vehicles_enter,
+            "total_vehicles_pass": total_vehicles_pass,
+            "vehicle_types_enter": vehicle_types_enter,
+            "vehicle_types_pass": vehicle_types_pass,
             "vehicle_paths": vehicle_paths
         }
 
