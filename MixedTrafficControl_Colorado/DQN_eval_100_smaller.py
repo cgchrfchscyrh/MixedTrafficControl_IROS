@@ -91,15 +91,17 @@ if __name__ == "__main__":
                     obs.pop(key)
             if dones['__all__']:
                 obs, info = env.reset()
-                
+
         # Collect statistics for each junction
         run_key = f"run_{i + 1}"
         evaluation_data[run_key] = {"junctions": {}}
         for junc_id in env.junction_list:
             junction_stats = env.get_junction_stats(junc_id)  # Assumes a method returning stats per junction
             evaluation_data[run_key]["junctions"][junc_id] = {
-                "total_vehicles": junction_stats["total_vehicles"],
-                "vehicle_types": junction_stats["vehicle_types"],
+                "total_vehicles_enter": junction_stats["total_vehicles_enter"],
+                "total_vehicles_pass": junction_stats["total_vehicles_pass"],
+                "vehicle_types_enter": junction_stats["vehicle_types_enter"],
+                "vehicle_types_pass": junction_stats["vehicle_types_pass"],
                 "vehicle_paths": junction_stats["vehicle_paths"]
             }
 
