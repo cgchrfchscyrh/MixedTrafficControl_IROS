@@ -229,7 +229,11 @@ class Env(MultiAgentEnv):
                 vehicle_ids = traci.edge.getLastStepVehicleIDs(edge_id)
                 for veh_id in vehicle_ids:
                     current_lane_id = traci.vehicle.getLaneID(veh_id)
-                    # 如果车辆已经有记录，更新 destination
+                    
+                    if veh_id not in self.vehicle_lane_stats[junc_id]:
+                        # 如果 veh_id 未被记录，初始化其数据
+                        self.vehicle_lane_stats[junc_id][veh_id] = {"origin": None, "destination": None}
+
                     self.vehicle_lane_stats[junc_id][veh_id]["destination"] = current_lane_id
 
     def update_vehicle_path_data(self):
