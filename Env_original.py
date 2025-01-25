@@ -258,6 +258,13 @@ class Env(MultiAgentEnv):
                                 prev_edge = route[current_index - 1]
                                 self.vehicle_lane_stats[junc_id][veh_id]["origin"] = prev_edge
 
+                        if veh_id not in self.incoming_vehicle_history[junc_id]:
+                            self.incoming_vehicle_history[junc_id].add(veh_id)
+                            self.incoming_traffic_counts[junc_id] += 1
+
+                            # 获取车辆类型
+                            self.incoming_vehicle_types[junc_id][self.vehicles[veh_id].type] += 1
+
     def update_vehicle_path_data(self):
         """
         记录每辆车当前所在的路段和车道，并分类为 incoming edges 或 outgoing edges
