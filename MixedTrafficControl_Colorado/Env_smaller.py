@@ -216,7 +216,21 @@ class Env(MultiAgentEnv):
                         # 如果 veh_id 未被记录，初始化其数据
                         self.vehicle_lane_stats[junc_id][veh_id] = {"origin": None, "destination": None}
 
+                    # 设置 destination 为当前 lane
                     self.vehicle_lane_stats[junc_id][veh_id]["destination"] = current_lane_id
+
+                    # 检查并补全 origin
+                    if self.vehicle_lane_stats[junc_id][veh_id]["origin"] is None:
+                        # 查询车辆的完整 route
+                        route = traci.vehicle.getRoute(veh_id)
+                        
+                        # 查找当前 edge 在 route 中的位置
+                        if edge_id in route:
+                            current_index = route.index(edge_id)
+                            if current_index > 0:  # 确保有前一个 edge
+                                # 将前一个 edge 记录为 origin
+                                prev_edge = route[current_index - 1]
+                                self.vehicle_lane_stats[junc_id][veh_id]["origin"] = prev_edge
 
     def update_vehicle_path_data(self):
         """
@@ -232,6 +246,11 @@ class Env(MultiAgentEnv):
             current_edge_id = traci.vehicle.getRoadID(veh_id)
             current_lane_id = traci.vehicle.getLaneID(veh_id)
 
+            # current_time = traci.simulation.getTime()  # 获取当前时间步
+            # # print(f"Current timestep: {current_time}")  # 打印当前时间步
+            # if veh_id == "13":
+            #     print("13: ", current_time, current_edge_id)
+                
             # 如果当前边不属于任何控制路口的 incoming 或 outgoing edges，跳过
             is_control_edge = False
             for junc_id in self.junction_list:
