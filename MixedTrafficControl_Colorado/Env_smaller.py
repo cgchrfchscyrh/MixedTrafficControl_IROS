@@ -105,6 +105,7 @@ class Env(MultiAgentEnv):
         for junc_id in self.junction_list:
             # 获取并过滤 incoming edges
             all_incoming = traci.junction.getIncomingEdges(junc_id)
+            # facing_junction_id = self.map.get_facing_intersection(veh.road_id)
             self.all_junction_incoming_edges[junc_id] = [edge for edge in all_incoming if not edge.startswith(":")]
 
             # 获取并过滤 outgoing edges
@@ -174,27 +175,73 @@ class Env(MultiAgentEnv):
         """
         在每个时间步调用，分别更新到达路口和经过路口的车流量，同时记录车辆的 origin 和 destination lane
         """
-        # 遍历所有路口的incoming edges
-        for junc_id, incoming_edges in self.all_junction_incoming_edges.items():
-            for edge_id in incoming_edges:
-                # 获取当前边上的车辆 ID
-                vehicle_ids = traci.edge.getLastStepVehicleIDs(edge_id)
-                for veh_id in vehicle_ids:
-                    current_lane_id = traci.vehicle.getLaneID(veh_id)
-                    # 如果车辆尚未记录 origin
-                    if veh_id not in self.vehicle_lane_stats[junc_id]:
-                        self.vehicle_lane_stats[junc_id][veh_id] = {"origin": None, "destination": None}
-                    # 如果 origin 尚未记录，设置为当前 lane
-                    if self.vehicle_lane_stats[junc_id][veh_id]["origin"] is None:
-                        self.vehicle_lane_stats[junc_id][veh_id]["origin"] = current_lane_id
-                    
-                    # 如果车辆尚未被统计，记录到达路口信息
-                    if veh_id not in self.incoming_vehicle_history[junc_id]:
-                        self.incoming_vehicle_history[junc_id].add(veh_id)
-                        self.incoming_traffic_counts[junc_id] += 1
 
-                        # 获取车辆类型
-                        self.incoming_vehicle_types[junc_id][self.vehicles[veh_id].type] += 1
+        # 获取当前所有车辆 ID
+        all_vehicle_ids = traci.vehicle.getIDList()
+
+        for veh_id in all_vehicle_ids:
+            current_lane_id = traci.vehicle.getLaneID(veh_id)  # 获取车辆当前的 lane ID
+            veh_edge_id = traci.vehicle.getRoadID(veh_id)  # 获取车辆当前的 edge ID
+            facing_junction_id = self.map.get_facing_intersection(veh_edge_id)  # 计算车辆将到达的 junction ID
+
+            # 检查 facing_junction_id 是否在 junction_list 中
+            if not facing_junction_id or facing_junction_id not in self.junction_list:
+                continue  # 如果不在 junction_list 中，跳过该车辆
+
+            # 初始化该 junction 的数据结构
+            if facing_junction_id not in self.vehicle_lane_stats:
+                self.vehicle_lane_stats[facing_junction_id] = {}
+            if facing_junction_id not in self.incoming_vehicle_history:
+                self.incoming_vehicle_history[facing_junction_id] = set()
+            if facing_junction_id not in self.incoming_traffic_counts:
+                self.incoming_traffic_counts[facing_junction_id] = 0
+            if facing_junction_id not in self.incoming_vehicle_types:
+                self.incoming_vehicle_types[facing_junction_id] = {"RL": 0, "IDM": 0}
+
+            # 初始化该车辆的统计数据
+            if veh_id not in self.vehicle_lane_stats[facing_junction_id]:
+                self.vehicle_lane_stats[facing_junction_id][veh_id] = {"origin": None, "destination": None}
+
+            # 如果 origin 尚未记录，设置为当前 lane
+            if self.vehicle_lane_stats[facing_junction_id][veh_id]["origin"] is None:
+                self.vehicle_lane_stats[facing_junction_id][veh_id]["origin"] = current_lane_id
+
+            # 如果车辆尚未被统计，记录到达路口信息
+            if veh_id not in self.incoming_vehicle_history[facing_junction_id]:
+                self.incoming_vehicle_history[facing_junction_id].add(veh_id)
+                self.incoming_traffic_counts[facing_junction_id] += 1
+
+                # 获取车辆类型
+                vehicle_type = self.vehicles[veh_id].type if veh_id in self.vehicles else "Unknown"
+                if vehicle_type in self.incoming_vehicle_types[facing_junction_id]:
+                    self.incoming_vehicle_types[facing_junction_id][vehicle_type] += 1
+                else:
+                    self.incoming_vehicle_types[facing_junction_id][vehicle_type] = 1
+
+        # # 遍历所有路口的incoming edges
+        # for junc_id, incoming_edges in self.all_junction_incoming_edges.items():
+        #     for edge_id in incoming_edges:
+        #         # 获取当前边上的车辆 ID
+        #         vehicle_ids = traci.edge.getLastStepVehicleIDs(edge_id)
+        #         for veh_id in vehicle_ids:
+        #             current_lane_id = traci.vehicle.getLaneID(veh_id)
+        #             veh_edge_id = traci.vehicle.getRoadID(veh_id)
+        #             facing_junction_id = self.map.get_facing_intersection(veh_edge_id)
+
+        #             # 如果车辆尚未记录 origin
+        #             if veh_id not in self.vehicle_lane_stats[junc_id]:
+        #                 self.vehicle_lane_stats[junc_id][veh_id] = {"origin": None, "destination": None}
+        #             # 如果 origin 尚未记录，设置为当前 lane
+        #             if self.vehicle_lane_stats[junc_id][veh_id]["origin"] is None:
+        #                 self.vehicle_lane_stats[junc_id][veh_id]["origin"] = current_lane_id
+                    
+        #             # 如果车辆尚未被统计，记录到达路口信息
+        #             if veh_id not in self.incoming_vehicle_history[junc_id]:
+        #                 self.incoming_vehicle_history[junc_id].add(veh_id)
+        #                 self.incoming_traffic_counts[junc_id] += 1
+
+        #                 # 获取车辆类型
+        #                 self.incoming_vehicle_types[junc_id][self.vehicles[veh_id].type] += 1
 
         # 遍历所有路口的outgoing edges
         for junc_id, outgoing_edges in self.all_junction_outgoing_edges.items():
@@ -239,54 +286,54 @@ class Env(MultiAgentEnv):
                             # 获取车辆类型
                             self.incoming_vehicle_types[junc_id][self.vehicles[veh_id].type] += 1
 
-    def update_vehicle_path_data(self):
-        """
-        记录每辆车当前所在的路段和车道，并分类为 incoming edges 或 outgoing edges
-        仅在车辆位于控制路口的相关边时保存数据。
-        """
-        # 获取当前所有车辆的ID
-        vehicle_ids = traci.vehicle.getIDList()
+    # def update_vehicle_path_data(self):
+    #     """
+    #     记录每辆车当前所在的路段和车道，并分类为 incoming edges 或 outgoing edges
+    #     仅在车辆位于控制路口的相关边时保存数据。
+    #     """
+    #     # 获取当前所有车辆的ID
+    #     vehicle_ids = traci.vehicle.getIDList()
 
-        # 遍历每一辆车
-        for veh_id in vehicle_ids:
-            # 获取车辆当前所在的边和车道
-            current_edge_id = traci.vehicle.getRoadID(veh_id)
-            current_lane_id = traci.vehicle.getLaneID(veh_id)
+    #     # 遍历每一辆车
+    #     for veh_id in vehicle_ids:
+    #         # 获取车辆当前所在的边和车道
+    #         current_edge_id = traci.vehicle.getRoadID(veh_id)
+    #         current_lane_id = traci.vehicle.getLaneID(veh_id)
 
-            # current_time = traci.simulation.getTime()  # 获取当前时间步
-            # # print(f"Current timestep: {current_time}")  # 打印当前时间步
-            # if veh_id == "13":
-            #     print("13: ", current_time, current_edge_id)
+    #         facing_junction_id = self.map.get_facing_intersection(current_edge_id)
+    #         # current_time = traci.simulation.getTime()  # 获取当前时间步
+    #         # # print(f"Current timestep: {current_time}")  # 打印当前时间步
+    #         # if veh_id == "13":
+    #         #     print("13: ", current_time, current_edge_id)
                 
-            # 如果当前边不属于任何控制路口的 incoming 或 outgoing edges，跳过
-            is_control_edge = False
-            for junc_id in self.junction_list:
-                if (current_edge_id in self.all_junction_incoming_edges[junc_id] or 
-                    current_edge_id in self.all_junction_outgoing_edges[junc_id]):
-                    is_control_edge = True
-                    break
+    #         # 如果当前边不属于任何控制路口的 incoming 或 outgoing edges，跳过
+    #         is_control_edge = False
+    #         for junc_id in self.junction_list:
+    #             if (current_edge_id in self.all_junction_incoming_edges[junc_id] or 
+    #                 current_edge_id in self.all_junction_outgoing_edges[junc_id]):
+    #                 is_control_edge = True
+    #                 break
 
-            if not is_control_edge:
-                continue
+    #         if not is_control_edge:
+    #             continue
 
-            # 初始化车辆路径记录
-            if veh_id not in self.vehicle_path_data:
-                self.vehicle_path_data[veh_id] = {
-                    "incoming_lanes": set(),
-                    "outgoing_lanes": set()
-                }
+    #         # 初始化车辆路径记录
+    #         if veh_id not in self.vehicle_path_data:
+    #             self.vehicle_path_data[veh_id] = {
+    #                 "incoming_lanes": set(),
+    #                 "outgoing_lanes": set()
+    #             }
 
-            # 遍历控制路口，检查车辆是否在这些路口的 incoming 或 outgoing edges 上
-            for junc_id in self.junction_list:
-                # 检查是否在当前路口的 incoming edges 上
-                if current_edge_id in self.all_junction_incoming_edges[junc_id]:
-                    self.vehicle_path_data[veh_id]["incoming_lanes"].add(current_lane_id)
+    #         # 遍历控制路口，检查车辆是否在这些路口的 incoming 或 outgoing edges 上
+    #         for junc_id in self.junction_list:
+    #             # 检查是否在当前路口的 incoming edges 上
+    #             if current_edge_id in self.all_junction_incoming_edges[junc_id]:
+    #                 self.vehicle_path_data[veh_id]["incoming_lanes"].add(current_lane_id)
                     
-                    # 检查是否在当前路口的 outgoing edges 上
-                    if current_edge_id in self.all_junction_outgoing_edges[junc_id]:
-                        self.vehicle_path_data[veh_id]["outgoing_lanes"].add(current_lane_id)
+    #                 # 检查是否在当前路口的 outgoing edges 上
+    #                 if current_edge_id in self.all_junction_outgoing_edges[junc_id]:
+    #                     self.vehicle_path_data[veh_id]["outgoing_lanes"].add(current_lane_id)
 
-        
     def get_junction_stats(self, junc_id):
         """
         获取指定路口的统计信息, 包括到达车辆总数、车辆类型分布, 以及每辆车的出发和到达lane。
@@ -861,7 +908,7 @@ class Env(MultiAgentEnv):
         self._update_obs()
 
         self.update_traffic_flow()
-        self.update_vehicle_path_data()
+        # self.update_vehicle_path_data()
 
         obs = {}
         rewards = {}
