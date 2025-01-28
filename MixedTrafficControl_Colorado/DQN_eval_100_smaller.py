@@ -53,7 +53,7 @@ if __name__ == "__main__":
         "spawn_rl_prob": {},
         "probablity_RL": rv_rate,
         "cfg":'sumo_networks/colorado/colorado_smaller.sumocfg',
-        "render": False,
+        "render": True,
         "map_xml":'sumo_networks/colorado/colorado_smaller.net.xml',
         "max_episode_steps": args.stop_timesteps,
         "conflict_mechanism": 'flexible',
@@ -74,7 +74,6 @@ if __name__ == "__main__":
 
     for i in range(times):
         print(f"{rv_rate}: Starting evaluation {i + 1}/{times}...")
-        env.total_arrived_count = 0
         evaluation_start = time.time()
         dones = truncated = {}
         dones['__all__'] = truncated['__all__'] = False
@@ -85,7 +84,7 @@ if __name__ == "__main__":
             actions = {}
             for agent_id, agent_obs in obs.items():
                 actions[agent_id] = algo.compute_single_action(agent_obs, explore=args.explore_during_inference, policy_id="shared_policy")
-            obs, reward, dones, truncated, info = env.step(actions)
+            obs, reward, dones, truncated, info = env.step(actions, eval=True)
             for key, done in dones.items():
                 if done:
                     obs.pop(key)
@@ -125,7 +124,7 @@ if __name__ == "__main__":
 
     print("Smaller: Saving all evaluation data to a single JSON file")
     # 文件名中加入时间戳
-    with open(f"{args.save_dir}/evaluation_results_{timestamp}.json", "w") as json_file:
+    with open(f"{args.save_dir}/smaller_{rv_rate}_evaluation_results_{timestamp}.json", "w") as json_file:
         json.dump(evaluation_data, json_file, indent=4)
 
     # 将每次运行的数据结构中的集合转换为列表，以便 JSON 序列化
