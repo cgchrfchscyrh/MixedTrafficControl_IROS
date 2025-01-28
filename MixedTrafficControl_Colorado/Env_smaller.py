@@ -77,9 +77,20 @@ class Env(MultiAgentEnv):
         # self.junction_waiting_histograms = {junc: [] for junc in all_junction_list}
 
         # self.junction_traffic_throughput = {JuncID: 0 for JuncID in all_junction_list}
-        self.all_junction_incoming_edges = {}  # 存储每个路口的入边
-        self.all_junction_outgoing_edges = {}  # 存储每个路口的出边
-        
+        # self.all_junction_incoming_edges = {}  # 存储每个路口的入边
+        # self.all_junction_outgoing_edges = {}  # 存储每个路口的出边
+        # self.all_junction_outgoing_edges['cluster12203246695_12203246696_430572036_442436239'] = ['1318569361#0',  '1318569361#1', '1318565916#0', '1318565916#1', '978613917#0', '978613917#1', '1318569357']
+        # self.all_junction_outgoing_edges['cluster_2052409422_2052409707_542824247_542824770_#2more'] = ['978615348#0',  '978615345#1', '978615347#1', '38520914#0']
+        # self.all_junction_outgoing_edges['cluster_2093101229_2093101656_2093101781_2093101915_#8more'] = ['229489592#2',  '223369741#1', '229489595#2', '223369742#1']
+        # self.all_junction_outgoing_edges['cluster_439980117_439980118_442435910_442435912'] = ['229489602#1',  '436475433#5', '229489593#1', '37552734#10']
+
+        self.all_junction_outgoing_edges = {
+            'cluster12203246695_12203246696_430572036_442436239': ['1318569361#0', '1318569361#1', '1318565916#0', '1318565916#1', '978613917#0', '978613917#1', '1318569357'],
+            'cluster_2052409422_2052409707_542824247_542824770_#2more': ['978615348#0', '978615345#1', '978615347#1', '38520914#0'],
+            'cluster_2093101229_2093101656_2093101781_2093101915_#8more': ['229489592#2', '223369741#1', '229489595#2', '223369742#1'],
+            'cluster_439980117_439980118_442435910_442435912': ['229489602#1', '436475433#5', '229489593#1', '37552734#10']
+        }
+
         self.incoming_traffic_counts = {junc: 0 for junc in self.junction_list}
         self.outgoing_traffic_counts = {junc: 0 for junc in self.junction_list}
 
@@ -101,22 +112,22 @@ class Env(MultiAgentEnv):
         self.all_previous_global_waiting = dict()
         self.global_obs = dict()
 
-        # 初始化每个路口的 incoming 和 outgoing edges，但排除掉以 ":" 开头的内部 ID
-        for junc_id in self.junction_list:
-            # 获取并过滤 incoming edges
-            all_incoming = traci.junction.getIncomingEdges(junc_id)
-            # facing_junction_id = self.map.get_facing_intersection(veh.road_id)
-            self.all_junction_incoming_edges[junc_id] = [edge for edge in all_incoming if not edge.startswith(":")]
+        # # 初始化每个路口的 incoming 和 outgoing edges，但排除掉以 ":" 开头的内部 ID
+        # for junc_id in self.junction_list:
+        #     # 获取并过滤 incoming edges
+        #     all_incoming = traci.junction.getIncomingEdges(junc_id)
+        #     # facing_junction_id = self.map.get_facing_intersection(veh.road_id)
+        #     self.all_junction_incoming_edges[junc_id] = [edge for edge in all_incoming if not edge.startswith(":")]
 
-            # 获取并过滤 outgoing edges
-            all_outgoing = traci.junction.getOutgoingEdges(junc_id)
-            self.all_junction_outgoing_edges[junc_id] = [edge for edge in all_outgoing if not edge.startswith(":")]
+        #     # 获取并过滤 outgoing edges
+        #     all_outgoing = traci.junction.getOutgoingEdges(junc_id)
+        #     self.all_junction_outgoing_edges[junc_id] = [edge for edge in all_outgoing if not edge.startswith(":")]
 
         # 初始化每个 edge 的车辆历史
         # for junc_id, outgoing_edges in self.all_junction_outgoing_edges.items():
         #     for edge_id in outgoing_edges:
         #         self.vehicle_history[edge_id] = set()  # 每个边一个独立的 set
-        print("incoming edges: ", self.all_junction_incoming_edges)
+        # print("incoming edges: ", self.all_junction_incoming_edges)
         print("outgoing edges: ", self.all_junction_outgoing_edges)
 
         for JuncID in all_junction_list:
