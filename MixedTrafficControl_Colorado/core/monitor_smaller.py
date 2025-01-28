@@ -22,7 +22,6 @@ class DataMonitor(object):
         # self.veh_waiting_juncs = env.veh_waiting_juncs
         # self.all_previous_global_waiting = env.all_previous_global_waiting
         # self.total_arrived_count = env.total_arrived_count
-        # self.junction_traffic_counts = env.junction_traffic_counts
         self.clear_data()
 
     def clear_data(self):
@@ -218,7 +217,7 @@ class DataMonitor(object):
 
         # 打印每个路口的车流量
         print("\n--- Per junction throughput ---")
-        for junc_id, count in env.junction_traffic_counts.items():
+        for junc_id, count in env.outgoing_traffic_counts.items():
             per_junction_throughput[junc_id] = count
             print(f"{junc_id} - Throughput: {count}")
 
