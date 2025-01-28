@@ -116,8 +116,8 @@ class Env(MultiAgentEnv):
         # for junc_id, outgoing_edges in self.all_junction_outgoing_edges.items():
         #     for edge_id in outgoing_edges:
         #         self.vehicle_history[edge_id] = set()  # 每个边一个独立的 set
-
-        # print("outgoing edges: ", self.all_junction_outgoing_edges)
+        print("incoming edges: ", self.all_junction_incoming_edges)
+        print("outgoing edges: ", self.all_junction_outgoing_edges)
 
         for JuncID in all_junction_list:
             self.all_previous_global_waiting[JuncID] = dict()
@@ -792,7 +792,7 @@ class Env(MultiAgentEnv):
 
             self.previous_global_waiting[JuncID]['sum'] = weighted_sum
 
-    def step_once(self, action={}):
+    def step_once(self, action={}, eval=False):
         # self._print_debug('step')
         self.new_departed = set()
         self.sumo_interface.set_max_speed_all(10)
@@ -901,13 +901,11 @@ class Env(MultiAgentEnv):
             if wt > 0:
                 self.vehicles[veh_id].wait_time +=1
 
-            #新增
-
-
         ## update obs 
         self._update_obs()
 
-        self.update_traffic_flow()
+        if eval:
+            self.update_traffic_flow()
         # self.update_vehicle_path_data()
 
         obs = {}
@@ -996,11 +994,11 @@ class Env(MultiAgentEnv):
 
         return obs, rewards, dones, truncated, infos
 
-    def step(self, action={}):
+    def step(self, action={}, eval=False):
         if len(action) == 0:
             print("empty action")
 
-        obs, rewards, dones, truncated, infos = self.step_once(action)
+        obs, rewards, dones, truncated, infos = self.step_once(action, eval)
 
         # COMMENT OUT THE FOLLOWING LINES IF DOING BASELINE SCRIPTS
         # avoid empty obs or all agents are done during simulation
