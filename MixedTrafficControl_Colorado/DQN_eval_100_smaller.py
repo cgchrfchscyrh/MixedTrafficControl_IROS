@@ -1,8 +1,8 @@
 import time, json, datetime
-import numpy as np
-from ray.rllib.algorithms.algorithm import Algorithm
+import numpy as np #type:ignore
+from ray.rllib.algorithms.algorithm import Algorithm #type:ignore
 import argparse
-import ray
+import ray #type:ignore
 from Env_smaller import Env
 from collections import defaultdict
 
@@ -88,21 +88,37 @@ if __name__ == "__main__":
             for key, done in dones.items():
                 if done:
                     obs.pop(key)
+
+            # **如果 episode 结束，不管是因 `dones` 还是 `truncated`，先统计数据**
+            if dones['__all__'] or truncated['__all__']:
+                run_key = f"run_{i + 1}"
+                evaluation_data[run_key] = {"junctions": {}}
+
+                for junc_id in env.junction_list:
+                    junction_stats = env.get_junction_stats(junc_id)  # **确保 reset 之前统计数据**
+                    evaluation_data[run_key]["junctions"][junc_id] = {
+                        "total_vehicles_enter": junction_stats["total_vehicles_enter"],
+                        "total_vehicles_pass": junction_stats["total_vehicles_pass"],
+                        "vehicle_types_enter": junction_stats["vehicle_types_enter"],
+                        "vehicle_types_pass": junction_stats["vehicle_types_pass"],
+                        "vehicle_paths": junction_stats["vehicle_paths"],
+                    }
+
             if dones['__all__']:
                 obs, info = env.reset()
 
-        # Collect statistics for each junction
-        run_key = f"run_{i + 1}"
-        evaluation_data[run_key] = {"junctions": {}}
-        for junc_id in env.junction_list:
-            junction_stats = env.get_junction_stats(junc_id)  # Assumes a method returning stats per junction
-            evaluation_data[run_key]["junctions"][junc_id] = {
-                "total_vehicles_enter": junction_stats["total_vehicles_enter"],
-                "total_vehicles_pass": junction_stats["total_vehicles_pass"],
-                "vehicle_types_enter": junction_stats["vehicle_types_enter"],
-                "vehicle_types_pass": junction_stats["vehicle_types_pass"],
-                "vehicle_paths": junction_stats["vehicle_paths"]
-            }
+        # # Collect statistics for each junction
+        # run_key = f"run_{i + 1}"
+        # evaluation_data[run_key] = {"junctions": {}}
+        # for junc_id in env.junction_list:
+        #     junction_stats = env.get_junction_stats(junc_id)  # Assumes a method returning stats per junction
+        #     evaluation_data[run_key]["junctions"][junc_id] = {
+        #         "total_vehicles_enter": junction_stats["total_vehicles_enter"],
+        #         "total_vehicles_pass": junction_stats["total_vehicles_pass"],
+        #         "vehicle_types_enter": junction_stats["vehicle_types_enter"],
+        #         "vehicle_types_pass": junction_stats["vehicle_types_pass"],
+        #         "vehicle_paths": junction_stats["vehicle_paths"]
+        #     }
 
         # Store vehicle_path_data for this run
         vehicle_path_data_collection[run_key] = env.vehicle_path_data
