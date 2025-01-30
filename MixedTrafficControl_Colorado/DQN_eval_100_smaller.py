@@ -70,7 +70,7 @@ if __name__ == "__main__":
     evaluation_data = {}
     vehicle_path_data_collection = {}
     start_time = time.time()
-    times = 1
+    times = 100
 
     # 预初始化变量，确保后续可以安全访问
     avg_wait = 0
