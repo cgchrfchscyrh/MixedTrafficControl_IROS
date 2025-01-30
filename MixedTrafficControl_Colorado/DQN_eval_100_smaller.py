@@ -53,7 +53,7 @@ if __name__ == "__main__":
         "spawn_rl_prob": {},
         "probablity_RL": rv_rate,
         "cfg":'sumo_networks/colorado/colorado_smaller.sumocfg',
-        "render": True,
+        "render": False,
         "map_xml":'sumo_networks/colorado/colorado_smaller.net.xml',
         "max_episode_steps": args.stop_timesteps,
         "conflict_mechanism": 'flexible',
@@ -70,7 +70,13 @@ if __name__ == "__main__":
     evaluation_data = {}
     vehicle_path_data_collection = {}
     start_time = time.time()
-    times = 100
+    times = 8
+
+    # 预初始化变量，确保后续可以安全访问
+    avg_wait = 0
+    total_arrived = 0
+    per_junction_avg_wait = {junc_id: 0 for junc_id in env.junction_list}
+    per_junction_throughput = {junc_id: 0 for junc_id in env.junction_list}
 
     for i in range(times):
         print(f"{rv_rate}: Starting evaluation {i + 1}/{times}...")
@@ -104,6 +110,10 @@ if __name__ == "__main__":
                         "vehicle_paths": junction_stats["vehicle_paths"],
                     }
 
+                        # Store vehicle_path_data for this run
+                vehicle_path_data_collection[run_key] = env.vehicle_path_data
+                avg_wait, total_arrived, per_junction_avg_wait, per_junction_throughput = env.monitor.evaluate(env)
+
             if dones['__all__']:
                 obs, info = env.reset()
 
@@ -119,10 +129,6 @@ if __name__ == "__main__":
         #         "vehicle_types_pass": junction_stats["vehicle_types_pass"],
         #         "vehicle_paths": junction_stats["vehicle_paths"]
         #     }
-
-        # Store vehicle_path_data for this run
-        vehicle_path_data_collection[run_key] = env.vehicle_path_data
-        avg_wait, total_arrived, per_junction_avg_wait, per_junction_throughput = env.monitor.evaluate(env)
 
         # Append junction-level results
         for junc_id, avg_wait_time in per_junction_avg_wait.items():
