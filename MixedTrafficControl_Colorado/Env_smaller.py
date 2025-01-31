@@ -95,20 +95,20 @@ class Env(MultiAgentEnv):
             'cluster_1289585639_439979990_8156136067_8156136068_#1more':['858378009#3','436475433#12','-858378009#0','37552734#2']
         }
 
-        self.incoming_traffic_counts = {junc: 0 for junc in self.junction_list}
+        self.incoming_traffic_counts = {junc: 0 for junc in all_junction_list}
         self.outgoing_traffic_counts = {junc: 0 for junc in all_junction_list}
 
-        self.incoming_vehicle_history = {junc: set() for junc in self.junction_list}
+        self.incoming_vehicle_history = {junc: set() for junc in all_junction_list}
         self.outgoing_vehicle_history = {junc: set() for junc in all_junction_list}
 
         # self.junction_vehicle_types = {junc_id: {'RL': 0, 'IDM': 0} for junc_id in self.junction_list}
-        self.incoming_vehicle_types = {junc_id: {"RL": 0, "IDM": 0} for junc_id in self.junction_list}
-        self.outgoing_vehicle_types = {junc_id: {"RL": 0, "IDM": 0} for junc_id in self.junction_list}
+        self.incoming_vehicle_types = {junc_id: {"RL": 0, "IDM": 0} for junc_id in all_junction_list}
+        self.outgoing_vehicle_types = {junc_id: {"RL": 0, "IDM": 0} for junc_id in all_junction_list}
 
         self.vehicle_path_data = {}
         self.vehicle_lane_stats = {
             junc_id: {}  # 每个路口一个字典，用于记录车辆的 origin 和 destination lane
-            for junc_id in self.junction_list
+            for junc_id in all_junction_list
         }
 
         self.init_env()
@@ -1036,15 +1036,15 @@ class Env(MultiAgentEnv):
         # self._print_debug('reset')
         # soft reset
         # 清空每次评估需要重新记录的数据
-        self.incoming_traffic_counts = {junc: 0 for junc in self.junction_list}
+        self.incoming_traffic_counts = {junc: 0 for junc in all_junction_list}
         self.outgoing_traffic_counts = {junc: 0 for junc in all_junction_list}
-        self.incoming_vehicle_history = {junc: set() for junc in self.junction_list}
+        self.incoming_vehicle_history = {junc: set() for junc in all_junction_list}
         self.outgoing_vehicle_history = {junc: set() for junc in all_junction_list}
-        self.incoming_vehicle_types = {junc_id: {"RL": 0, "IDM": 0} for junc_id in self.junction_list}
-        self.outgoing_vehicle_types = {junc_id: {"RL": 0, "IDM": 0} for junc_id in self.junction_list}
+        self.incoming_vehicle_types = {junc_id: {"RL": 0, "IDM": 0} for junc_id in all_junction_list}
+        self.outgoing_vehicle_types = {junc_id: {"RL": 0, "IDM": 0} for junc_id in all_junction_list}
 
         # 重置 vehicle_lane_stats
-        self.vehicle_lane_stats = {junc_id: {} for junc_id in self.junction_list}
+        self.vehicle_lane_stats = {junc_id: {} for junc_id in all_junction_list}
 
         self.vehicle_path_data = {}
 
