@@ -88,11 +88,15 @@ class Env(MultiAgentEnv):
             'cluster12203246695_12203246696_430572036_442436239': ['1318569361#0', '1318569361#1', '1318565916#0', '1318565916#1', '978613917#0', '978613917#1', '1318569357'],
             'cluster_2052409422_2052409707_542824247_542824770_#2more': ['978615348#0', '978615345#1', '978615347#1', '38520914#0'],
             'cluster_2093101229_2093101656_2093101781_2093101915_#8more': ['229489592#2', '223369741#1', '229489595#2', '223369742#1'],
-            'cluster_439980117_439980118_442435910_442435912': ['229489602#1', '436475433#5', '229489593#1', '37552734#10']
+            'cluster_439980117_439980118_442435910_442435912': ['229489602#1', '436475433#5', '229489593#1', '37552734#10'],
+            'cluster_547498658_547498666_547498756_547498762_#8more':['43417383#22','229357868#1','892145086#1','1318568287#2'],
+            'cluster_2052409323_2052409733_2052409806_2052409936_#9more':['43417383#2','39829020#2','877763367#1','877763350#2'],
+            'cluster9663732079_J0_J1_J2_#2more':['858377714#6','223369741#12','-858377714#2','36870636#13'],
+            'cluster_1289585639_439979990_8156136067_8156136068_#1more':['858378009#3','436475433#12','-858378009#0','37552734#2']
         }
 
         self.incoming_traffic_counts = {junc: 0 for junc in self.junction_list}
-        self.outgoing_traffic_counts = {junc: 0 for junc in self.junction_list}
+        self.outgoing_traffic_counts = {junc: 0 for junc in all_junction_list}
 
         self.incoming_vehicle_history = {junc: set() for junc in self.junction_list}
         self.outgoing_vehicle_history = {junc: set() for junc in self.junction_list}
@@ -1033,7 +1037,7 @@ class Env(MultiAgentEnv):
         # soft reset
         # 清空每次评估需要重新记录的数据
         self.incoming_traffic_counts = {junc: 0 for junc in self.junction_list}
-        self.outgoing_traffic_counts = {junc: 0 for junc in self.junction_list}
+        self.outgoing_traffic_counts = {junc: 0 for junc in all_junction_list}
         self.incoming_vehicle_history = {junc: set() for junc in self.junction_list}
         self.outgoing_vehicle_history = {junc: set() for junc in self.junction_list}
         self.incoming_vehicle_types = {junc_id: {"RL": 0, "IDM": 0} for junc_id in self.junction_list}
