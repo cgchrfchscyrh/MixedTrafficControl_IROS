@@ -70,7 +70,7 @@ if __name__ == "__main__":
     evaluation_data = {}
     vehicle_path_data_collection = {}
     start_time = time.time()
-    times = 100
+    times = 1
 
     # 预初始化变量，确保后续可以安全访问
     avg_wait = 0
@@ -191,7 +191,7 @@ if __name__ == "__main__":
     # Compute per-junction statistics
     print("\n--- Per Junction Statistics ---")
     junction_stats = {}
-    for junc_id in env.junction_list:
+    for junc_id in all_junction_wait_times.keys():
         print(f"Junction {junc_id} - Waiting Time:")
         junction_stats[junc_id] = compute_stats(all_junction_wait_times[junc_id], f"Junction {junc_id} - Waiting Time", is_per_junction=True)
         print(f"Junction {junc_id} - Throughput:")
