@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #SBATCH --job-name=MTC_test    # Job name
 #SBATCH --mail-type=ALL               # Mail events (NONE, BEGIN, END, FAIL, ALL)
 #SBATCH --mail-user=liusongyang@ufl.edu   # Where to send mail	
@@ -8,16 +8,13 @@
 #SBATCH --mem=10gb                   # Memory limit
 #SBATCH --time=30:00:00               # Time limit hrs:min:sec
 #SBATCH --output=MTC_test_%j.out   # Standard output and error log
-
 pwd; hostname; date
 
-module load python
+export PATH=/blue/du.j/liusongyang/conda/envs/MTC3.9/bin:$PATH
 
 module load conda
 
 module load sumo/1.20.0
-
-conda activate MTC3.9
 
 echo "Running MTC test script"
 
