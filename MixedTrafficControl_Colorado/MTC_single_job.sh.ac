@@ -1,0 +1,27 @@
+#!/bin/bash
+#SBATCH --job-name=MTC_test    # Job name
+#SBATCH --mail-type=ALL               # Mail events (NONE, BEGIN, END, FAIL, ALL)
+#SBATCH --mail-user=liusongyang@ufl.edu   # Where to send mail	
+#SBATCH --nodes=1                     # Use one node
+#SBATCH --ntasks=1                    # Run a single task
+#SBATCH --cpus-per-task=64             # Use 1 core
+#SBATCH --mem=10gb                   # Memory limit
+#SBATCH --time=30:00:00               # Time limit hrs:min:sec
+#SBATCH --output=MTC_test_%j.out   # Standard output and error log
+pwd; hostname; date
+
+#module load sumo/1.20.0
+module load sumo/1.13.0
+#module load conda
+#conda activate MTC3.9
+env_path=/blue/du.j/liusongyang/.conda/envs/MTC3.9/bin
+export PATH=$env_path:$PATH
+
+echo "SUMO_HOME: $SUMO_HOME"
+echo "SUMO_BIN: $HPC_SUMO_BIN"
+which sumo
+echo "Running MTC test script"
+
+python DQN_run_medium.py --rv-rate 1.0 --stop-iters 1000 --framework torch --num-cpu $SLURM_CPUS_PER_TASK
+
+date
