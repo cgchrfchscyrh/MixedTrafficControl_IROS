@@ -116,19 +116,6 @@ if __name__ == "__main__":
             if dones['__all__']:
                 obs, info = env.reset()
 
-        # # Collect statistics for each junction
-        # run_key = f"run_{i + 1}"
-        # evaluation_data[run_key] = {"junctions": {}}
-        # for junc_id in env.junction_list:
-        #     junction_stats = env.get_junction_stats(junc_id)  # Assumes a method returning stats per junction
-        #     evaluation_data[run_key]["junctions"][junc_id] = {
-        #         "total_vehicles_enter": junction_stats["total_vehicles_enter"],
-        #         "total_vehicles_pass": junction_stats["total_vehicles_pass"],
-        #         "vehicle_types_enter": junction_stats["vehicle_types_enter"],
-        #         "vehicle_types_pass": junction_stats["vehicle_types_pass"],
-        #         "vehicle_paths": junction_stats["vehicle_paths"]
-        #     }
-
         # Append junction-level results
         for junc_id, avg_wait_time in per_junction_avg_wait.items():
             all_junction_wait_times[junc_id].append(avg_wait_time)
@@ -138,14 +125,14 @@ if __name__ == "__main__":
         # Append overall results
         results.append((avg_wait, total_arrived))
         evaluation_time = time.time() - evaluation_start
-        print(f"Smaller {rv_rate}: Evaluation {i + 1}/{times} completed: avg_wait={avg_wait}, total_arrived={total_arrived}, time={evaluation_time:.2f}s")
+        print(f"Medium {rv_rate}: Evaluation {i + 1}/{times} completed: avg_wait={avg_wait}, total_arrived={total_arrived}, time={evaluation_time:.2f}s")
     
     # 获取当前时间的时间戳
     timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
 
-    print("Smaller: Saving all evaluation data to a single JSON file")
+    print("Medium: Saving all evaluation data to a single JSON file")
     # 文件名中加入时间戳
-    with open(f"{args.save_dir}/smaller_{rv_rate}_evaluation_results_{timestamp}.json", "w") as json_file:
+    with open(f"{args.save_dir}/medium_{rv_rate}_evaluation_results_{timestamp}.json", "w") as json_file:
         json.dump(evaluation_data, json_file, indent=4)
 
     # 将每次运行的数据结构中的集合转换为列表，以便 JSON 序列化
@@ -154,7 +141,7 @@ if __name__ == "__main__":
             path_data["incoming_lanes"] = list(path_data["incoming_lanes"])
             path_data["outgoing_lanes"] = list(path_data["outgoing_lanes"])
 
-    print("Smaller: Saving vehicle path data")
+    print("Medium: Saving vehicle path data")
     # 另一个文件名也加入时间戳
     with open(f"{args.save_dir}/vehicle_path_data_{timestamp}.json", "w") as json_file:
         json.dump(vehicle_path_data_collection, json_file, indent=4)
@@ -167,7 +154,7 @@ if __name__ == "__main__":
         q1 = np.percentile(data, 25)
         median = np.median(data)
         q3 = np.percentile(data, 75)
-        iqr = q3 - q1
+        # iqr = q3 - q1
         minimum = np.min(data)
         maximum = np.max(data)
         print(f"\n{name} Statistics:")
@@ -175,16 +162,16 @@ if __name__ == "__main__":
         print(f"  Q1: {q1}")
         print(f"  Median: {median}")
         print(f"  Q3: {q3}")
-        print(f"  IQR: {iqr}")
+        # print(f"  IQR: {iqr}")
         print(f"  Maximum: {maximum}")
         if is_per_junction:
             return {
-                "Minimum": minimum,
-                "Q1": q1,
-                "Median": median,
-                "Q3": q3,
-                "IQR": iqr,
-                "Maximum": maximum
+                "Minimum": round(minimum,2),
+                "Q1": round(q1,2),
+                "Median": round(median,2),
+                "Q3": round(q3,2),
+                # "IQR": iqr,
+                "Maximum": round(maximum,2)
             }
 
     # Compute per-junction statistics
@@ -198,9 +185,9 @@ if __name__ == "__main__":
     avg_wait_results = [r[0] for r in results]
     total_arrived_results = [r[1] for r in results]
 
-    print(f"\n{rv_rate}: Overall Average Wait Time:")
+    print(f"\nMedium_{rv_rate}: Overall Average Wait Time:")
     compute_stats(avg_wait_results, "Average Wait Time")
-    print(f"\n{rv_rate}: Overall Total Arrived:")
+    print(f"\nMedium_{rv_rate}: Overall Total Arrived:")
     compute_stats(total_arrived_results, "Total Arrived")
 
     algo.stop()
