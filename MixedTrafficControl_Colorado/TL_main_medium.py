@@ -60,7 +60,7 @@ if __name__ == "__main__":
 
     while not dones['__all__'] and not truncated['__all__']:
         actions = {}
-        obs, reward, dones, truncated, info = env.step(actions)
+        obs, reward, dones, truncated, info = env.step(actions, eval = True)
 
         for key, done in dones.items():
             if done:
