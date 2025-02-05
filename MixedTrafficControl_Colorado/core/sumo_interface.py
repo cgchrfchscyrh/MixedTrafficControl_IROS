@@ -1,14 +1,17 @@
-
-import subprocess, inspect
+import inspect
 import sumolib
 import traci
 import traci.constants as T # https://sumo.dlr.de/pydoc/traci.constants.html
-from traci.exceptions import FatalTraCIError, TraCIException
-
+# from traci.exceptions import FatalTraCIError, TraCIException
 import os, sys
 sys.path.append(os.getcwd())
 from core.costomized_data_structures import Namespace
 from copy import deepcopy
+
+control_junction_list = ['cluster12203246695_12203246696_430572036_442436239',
+                    'cluster_2052409422_2052409707_542824247_542824770_#2more',
+                    'cluster_2093101229_2093101656_2093101781_2093101915_#8more',
+                    'cluster_439980117_439980118_442435910_442435912']
 
 class SubscribeDef:
     def __init__(self, tc_module, subs):
@@ -73,6 +76,7 @@ class SUMO(object):
             'log': 'sumolog'
         }
         cmd = ['sumo-gui' if self.render else 'sumo']
+        # cmd = 'sumo'
         for k, v in sumo_args.items():
             cmd.extend(['--%s' % k, self.val_to_str(v)] if v is not None else [])
         ## auto run
@@ -125,12 +129,14 @@ class SUMO(object):
             self.bk_tl()
         if self.traffic_light_status:
             tl_ids = self.tc.trafficlight.getIDList()
+            # print("\ntl_ids:", tl_ids)
             for tl_id in tl_ids:
-                current_state = self.tc.trafficlight.getRedYellowGreenState(tl_id)
-                new_state = ''
-                for _ in range(len(current_state)):
-                    new_state +=disable_state
-                self.tc.trafficlight.setRedYellowGreenState(tl_id, new_state)
+                if tl_id in control_junction_list:  # 只修改 control_junction_list 中的信号灯
+                    current_state = self.tc.trafficlight.getRedYellowGreenState(tl_id)
+                    new_state = ''
+                    for _ in range(len(current_state)):
+                        new_state += disable_state
+                    self.tc.trafficlight.setRedYellowGreenState(tl_id, new_state)
             self.traffic_light_status = False
 
     def restore_trafficlight(self):
