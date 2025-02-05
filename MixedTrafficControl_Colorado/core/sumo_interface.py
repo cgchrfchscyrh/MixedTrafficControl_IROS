@@ -8,10 +8,10 @@ sys.path.append(os.getcwd())
 from core.costomized_data_structures import Namespace
 from copy import deepcopy
 
-control_junction_list = ['cluster12203246695_12203246696_430572036_442436239',
+control_junction_list = ['J0', #cluster12203246695_12203246696_430572036_442436239
                     'cluster_2052409422_2052409707_542824247_542824770_#2more',
                     'cluster_2093101229_2093101656_2093101781_2093101915_#8more',
-                    'cluster_439980117_439980118_442435910_442435912']
+                    'GS_cluster_439980117_439980118_442435910_442435912']
 
 class SubscribeDef:
     def __init__(self, tc_module, subs):
