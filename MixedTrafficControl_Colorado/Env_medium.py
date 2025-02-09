@@ -55,7 +55,7 @@ class Env(MultiAgentEnv):
         self.traffic_light_program = self.config['traffic_light_program']
 
         self.junction_list = self.config['junction_list']
-        self.sumo_interface = SUMO(self.cfg, render=self.config['render'])
+        self.sumo_interface = SUMO(self.cfg, ctrl_list = self.junction_list, render=self.config['render'])
 
         self.map = NetMap(self.map_xml, all_junction_list)
         # self.map = NetMap(self.map_xml, self.junction_list)
@@ -955,6 +955,7 @@ class Env(MultiAgentEnv):
             JuncID, ego_dir = self.map.get_veh_moving_direction(rl_veh)
             if len(JuncID) == 0 or JuncID not in self.junction_list:
                 # skip the invalid JuncID 
+                # print('\nveh id:', rl_veh.id, ' invalid JuncID:', JuncID)
                 continue
         
             obs_control_queue_length = []
