@@ -55,7 +55,8 @@ class Env(MultiAgentEnv):
         self.traffic_light_program = self.config['traffic_light_program']
 
         self.junction_list = self.config['junction_list']
-        self.sumo_interface = SUMO(self.cfg, ctrl_list = self.junction_list, render=self.config['render'])
+        self.TL_list = self.config['TL_list']
+        self.sumo_interface = SUMO(self.cfg, TL_list = self.TL_list, render=self.config['render'])
 
         self.map = NetMap(self.map_xml, all_junction_list)
         # self.map = NetMap(self.map_xml, self.junction_list)
