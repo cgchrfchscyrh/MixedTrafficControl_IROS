@@ -8,10 +8,10 @@ sys.path.append(os.getcwd())
 from core.costomized_data_structures import Namespace
 from copy import deepcopy
 
-control_junction_list = ['J0', #cluster12203246695_12203246696_430572036_442436239
-                    'cluster_2052409422_2052409707_542824247_542824770_#2more',
-                    'cluster_2093101229_2093101656_2093101781_2093101915_#8more',
-                    'GS_cluster_439980117_439980118_442435910_442435912']
+# control_junction_list = ['J0', #cluster12203246695_12203246696_430572036_442436239
+#                     'cluster_2052409422_2052409707_542824247_542824770_#2more',
+#                     'cluster_2093101229_2093101656_2093101781_2093101915_#8more',
+#                     'GS_cluster_439980117_439980118_442435910_442435912']
 
 class SubscribeDef:
     def __init__(self, tc_module, subs):
@@ -28,11 +28,12 @@ class SubscribeDef:
         return Namespace(((n, res[v]) for n, v in zip(self.names, self.constants)))
 
 class SUMO(object):
-    def __init__(self, cfg, render=False):
+    def __init__(self, cfg, TL_list, render=False):
         self.print_debug = False
         self.tc = None    
         self.cfg = cfg
         self.render  = render
+        self.TL_list = TL_list
         self.sim_step = 1
         self.sumo_cmd = self.generate_sumo()
         self.tc = self.start_sumo(self.tc)    
@@ -131,7 +132,7 @@ class SUMO(object):
             tl_ids = self.tc.trafficlight.getIDList()
             # print("\ntl_ids:", tl_ids)
             for tl_id in tl_ids:
-                if tl_id in control_junction_list:  # 只修改 control_junction_list 中的信号灯
+                if tl_id in self.TL_list:  # 只修改 TL_list 中的信号灯
                     current_state = self.tc.trafficlight.getRedYellowGreenState(tl_id)
                     new_state = ''
                     for _ in range(len(current_state)):
