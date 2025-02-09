@@ -28,7 +28,7 @@ parser.add_argument("--rv-rate", type=float, default=0.6, help="RV percentage. 0
 if __name__ == "__main__":
     args = parser.parse_args()
 
-    ray.init(num_gpus=0, num_cpus=args.num_cpus)
+    ray.init(num_gpus=1, num_cpus=args.num_cpus)
 
     dummy_env = Env({
             "junction_list":['cluster12203246695_12203246696_430572036_442436239',
@@ -39,10 +39,18 @@ if __name__ == "__main__":
                     'cluster_2052409323_2052409733_2052409806_2052409936_#9more',
                     'cluster9663732079_J0_J1_J2_#2more',
                     'cluster_1289585639_439979990_8156136067_8156136068_#1more'],
+            "TL_list":['J0',
+                       'cluster_2052409422_2052409707_542824247_542824770_#2more',
+                       'cluster_2093101229_2093101656_2093101781_2093101915_#8more',
+                       'GS_cluster_439980117_439980118_442435910_442435912',
+                       'cluster_547498658_547498666_547498756_547498762_#8more',
+                       'cluster_2052409323_2052409733_2052409806_2052409936_#9more',
+                       'cluster9663732079_J0_J1_J2_#2more',
+                       'joinedS_8156136076_8156136077_cluster_1289585639_439979990_8156136067_8156136068_#1more'],
             "spawn_rl_prob":{},
             "probablity_RL":args.rv_rate,
             "cfg":'sumo_networks/colorado/colorado_medium.sumocfg',
-            "render":False,    
+            "render":True,    
             "map_xml":'sumo_networks/colorado/colorado_medium.net.xml',
             "max_episode_steps":1000, #1000
             "conflict_mechanism":'flexible',
@@ -76,10 +84,18 @@ if __name__ == "__main__":
                     'cluster_2052409323_2052409733_2052409806_2052409936_#9more',
                     'cluster9663732079_J0_J1_J2_#2more',
                     'cluster_1289585639_439979990_8156136067_8156136068_#1more'],
+            "TL_list":['J0',
+                       'cluster_2052409422_2052409707_542824247_542824770_#2more',
+                       'cluster_2093101229_2093101656_2093101781_2093101915_#8more',
+                       'GS_cluster_439980117_439980118_442435910_442435912',
+                       'cluster_547498658_547498666_547498756_547498762_#8more',
+                       'cluster_2052409323_2052409733_2052409806_2052409936_#9more',
+                       'cluster9663732079_J0_J1_J2_#2more',
+                       'joinedS_8156136076_8156136077_cluster_1289585639_439979990_8156136067_8156136068_#1more'],
             "spawn_rl_prob":{},
             "probablity_RL":args.rv_rate,
             "cfg":'sumo_networks/colorado/colorado_medium.sumocfg',
-            "render":False,
+            "render":True,
             "map_xml":'sumo_networks/colorado/colorado_medium.net.xml',
             # "rl_prob_range": [i*0.1 for i in range(5, 10)], # change RV penetration rate when reset
             "max_episode_steps":1000,
@@ -108,7 +124,7 @@ if __name__ == "__main__":
 
         .multi_agent(policies=policy, policy_mapping_fn=policy_mapping_fn)
         # Use GPUs iff `RLLIB_NUM_GPUS` env var set to > 0.ass 'ray.rllib.policy.policy_template.DQNTorchPolicy'> for PolicyID=shared_policy
-        .resources(num_gpus=0, num_cpus_per_worker=1)
+        .resources(num_gpus=1, num_cpus_per_worker=1)
         .callbacks(CustomLoggerCallback)
     )
 
