@@ -128,7 +128,7 @@ if __name__ == "__main__":
         "DQN",
         param_space=config.to_dict(),
         run_config=air.RunConfig(
-            name='DQN_RV'+str(args.rv_rate), 
+            name='DQN_6+8_RV'+str(args.rv_rate), 
             storage_path = "/blue/du.j/liusongyang/checkpoints/", 
             stop=stop, 
             # verbose = 3,

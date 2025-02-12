@@ -33,6 +33,8 @@ if __name__ == "__main__":
     dummy_env = Env({
             "junction_list":['cluster12203246695_12203246696_430572036_442436239',
                     'cluster_2052409422_2052409707_542824247_542824770_#2more'],
+            "TL_list":['J0',
+                       'cluster_2052409422_2052409707_542824247_542824770_#2more'],
             "spawn_rl_prob":{},
             "probablity_RL":args.rv_rate,
             "cfg":'sumo_networks/colorado/colorado_medium.sumocfg',
@@ -63,6 +65,8 @@ if __name__ == "__main__":
         DQNConfig()
         .environment(Env, env_config={
             "junction_list":['cluster12203246695_12203246696_430572036_442436239',
+                    'cluster_2052409422_2052409707_542824247_542824770_#2more'],
+            "TL_list":['J0',
                     'cluster_2052409422_2052409707_542824247_542824770_#2more'],
             "spawn_rl_prob":{},
             "probablity_RL":args.rv_rate,
@@ -108,7 +112,7 @@ if __name__ == "__main__":
         "DQN",
         param_space=config.to_dict(),
         run_config=air.RunConfig(
-            name='DQN_RV'+str(args.rv_rate), 
+            name='DQN_2+12_RV'+str(args.rv_rate), 
             storage_path = "/blue/du.j/liusongyang/checkpoints/", 
             stop=stop, 
             # verbose = 3,
