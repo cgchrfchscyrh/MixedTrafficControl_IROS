@@ -88,17 +88,3 @@ tensorboard --logdir ray_results/DQN_RV*rv-rate*/
 ```
 
 The "rv_rate" portion of the above command should be replaced with whatever RV penetration rate you want to observe.
-
-
-## **Citation**
-
-If you find the code useful for your work, please star this repo and consider citing:
-
-```
-@article{Wang2024Intersection,
-  author = {Wang, Dawei and Li, Weizi and Zhu, Lei and Pan, Jia},
-  title = {Learning to Control and Coordinate Mixed Traffic Through Robot Vehicles at Complex and Unsignalized Intersections},
-  journal = {International Journal of Robotics Research (IJRR)},
-  year = {2024},
-}
-```
