@@ -1,11 +1,4 @@
 # Mixed Traffic Control at Complex Intersections via Multi-agent Reinforcement Learning
-Official code for the paper:
-
-> **Learning to Control and Coordinate Mixed Traffic Through Robot Vehicles at Complex and Unsignalized Intersections**
->
-> Dawei Wang, Weizi Li, Lei Zhu, Jia Pan
->
-> <a href='https://arxiv.org/abs/2301.05294'><img src='https://img.shields.io/badge/arXiv-2301.05294-red'></a> <a href='https://sites.google.com/view/mixedtrafficcontrol/'><img src='https://img.shields.io/badge/Project-Video-Green'></a>
 
 
 ## Setup with Docker 
