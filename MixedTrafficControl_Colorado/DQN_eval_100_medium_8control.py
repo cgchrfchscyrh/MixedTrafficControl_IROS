@@ -1,7 +1,7 @@
 import time, json, datetime
 import numpy as np #type:ignore
 from ray.rllib.algorithms.algorithm import Algorithm #type:ignore
-import argparse
+import argparse, traci
 import ray #type:ignore
 from Env_medium import Env
 from collections import defaultdict
@@ -81,13 +81,16 @@ if __name__ == "__main__":
     evaluation_data = {}
     vehicle_path_data_collection = {}
     start_time = time.time()
-    times = 100
+    times = 1
 
     # 预初始化变量，确保后续可以安全访问
     avg_wait = 0
     total_arrived = 0
     per_junction_avg_wait = {junc_id: 0 for junc_id in env.junction_list}
     per_junction_throughput = {junc_id: 0 for junc_id in env.junction_list}
+
+    # 存储 100 次循环中 junction_334_wait_times 的数据，按 keyword 进行分类
+    aggregated_junction_334_wait_times = {}
 
     for i in range(times):
         print(f"{rv_rate}: Starting evaluation {i + 1}/{times}...")
@@ -122,7 +125,14 @@ if __name__ == "__main__":
                     }
 
                 vehicle_path_data_collection[run_key] = env.vehicle_path_data
-                avg_wait, total_arrived, per_junction_avg_wait, per_junction_throughput = env.monitor.evaluate(env)
+                # avg_wait, total_arrived, per_junction_avg_wait, per_junction_throughput = env.monitor.evaluate(env)
+                avg_wait, total_arrived, per_junction_avg_wait, per_junction_throughput, junction_334_wait_times = env.monitor.evaluate(env)
+
+                # **累积 junction_334_wait_times 数据**
+                for keyword, wait_time in junction_334_wait_times.items():
+                    if keyword not in aggregated_junction_334_wait_times:
+                        aggregated_junction_334_wait_times[keyword] = []
+                    aggregated_junction_334_wait_times[keyword].append(wait_time)
 
             if dones['__all__']:
                 obs, info = env.reset()
@@ -156,7 +166,7 @@ if __name__ == "__main__":
 
     print("Medium: Saving all evaluation data to a single JSON file")
     # 文件名中加入时间戳
-    with open(f"{args.save_dir}/smaller_{rv_rate}_evaluation_results_{timestamp}.json", "w") as json_file:
+    with open(f"{args.save_dir}/medium_{rv_rate}_evaluation_results_{timestamp}.json", "w") as json_file:
         json.dump(evaluation_data, json_file, indent=4)
 
     # 将每次运行的数据结构中的集合转换为列表，以便 JSON 序列化
@@ -198,6 +208,11 @@ if __name__ == "__main__":
                 # "IQR": iqr,
                 "Maximum": round(maximum,2)
             }
+
+    # 计算 junction_334_wait_times 统计信息
+    print("\n--- Statistics for Junction 334 Waiting Times (Per Keyword) ---")
+    for keyword, wait_times in aggregated_junction_334_wait_times.items():
+        compute_stats(wait_times, f"Junction 334 - {keyword} Waiting Time")
 
     # Compute per-junction statistics
     print("\n--- Per Junction Statistics ---")
