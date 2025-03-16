@@ -2,7 +2,6 @@ import numpy as np #type:ignore
 import pickle, os
 import matplotlib.pyplot as plt #type:ignore
 
-## For colorado.net.xml without roundabouts/one-way streets
 all_junction_list = ['cluster12203246695_12203246696_430572036_442436239', 
                        'cluster_547498658_547498666_547498756_547498762_#8more', 
 
@@ -97,9 +96,13 @@ class DataMonitor(object):
     def evaluate(self, env, min_step=500, max_step=1000):
         # 初始化统计变量
         total_wait = []  # 所有车辆的等待时间
+        # total_collisions = env.total_collisions  # 统计整个仿真的碰撞次数
 
         # 创建一个字典，用于存储每个路口的等待时间
         junction_waiting_times = {junc: [] for junc in all_junction_list}
+
+        # 存储 JuncID = 334 的等待时间（按 keyword 分类）
+        junction_334_wait_times = {}  # 直接用 keyword 作为 key
 
         # 从 veh_waiting_juncs 中提取等待时间
         for _, junctions in env.veh_waiting_juncs.items():
@@ -118,6 +121,10 @@ class DataMonitor(object):
                 avg_wait = np.mean(self.data_record[JuncID][keyword]['queue_wait'][min_step:max_step])
                 junction_wait.append(avg_wait)
 
+                # 如果是 JuncID = 334，存入详细字典
+                if JuncID == 'cluster_439980117_439980118_442435910_442435912':
+                    junction_334_wait_times[keyword] = avg_wait
+
             # 累计所有路口的总数据
             total_wait.extend(junction_wait)
 
@@ -132,19 +139,19 @@ class DataMonitor(object):
         print(f"Total Avg Wait Time: {np.mean(total_wait):.2f}")
 
         # 每个路口的直方图，不受 min_step 和 max_step 限制
-        for JuncID, waiting_times in junction_waiting_times.items():
-            plt.figure()
-            plt.hist(waiting_times, bins=20, range=(0, 1000), alpha=0.7, color='blue')
-            plt.title(f"Waiting Time Histogram \n{JuncID}")
-            plt.xlabel("Waiting Time (s)")
-            plt.ylabel("Vehicle Count")
-            plt.grid(True)
+        # for JuncID, waiting_times in junction_waiting_times.items():
+        #     plt.figure()
+        #     plt.hist(waiting_times, bins=20, range=(0, 1000), alpha=0.7, color='blue')
+        #     plt.title(f"Waiting Time Histogram \n{JuncID}")
+        #     plt.xlabel("Waiting Time (s)")
+        #     plt.ylabel("Vehicle Count")
+        #     plt.grid(True)
 
-            # 保存直方图到磁盘，以路口ID为命名
-            file_name = os.path.join(f"WTH_{JuncID}.jpg")
-            plt.savefig(file_name, format='jpg')
-            print(f"Saved histogram for Junction {JuncID} to {file_name}")
-            plt.close()  # 关闭图表，防止内存泄漏
+        #     # 保存直方图到磁盘，以路口ID为命名
+        #     file_name = os.path.join(f"WTH_{JuncID}.jpg")
+        #     plt.savefig(file_name, format='jpg')
+        #     print(f"Saved histogram for Junction {JuncID} to {file_name}")
+        #     plt.close()  # 关闭图表，防止内存泄漏
 
         # 打印到达目的地的车辆数量
         print(f"Total Arrivals: {env.total_arrived_count}")
@@ -155,12 +162,18 @@ class DataMonitor(object):
             per_junction_throughput[junc_id] = count
             print(f"{junc_id} - Throughput: {count}")
 
+        # 如果 JuncID = 334 存在数据，打印其详细等待时间
+        print("\n--- JuncID 334 Keyword-wise Wait Times ---")
+        for keyword, wait_time in junction_334_wait_times.items():
+            print(f"Direction {keyword}: {wait_time:.2f}s")
+
         # 返回所有统计数据
         return (
             np.mean(total_wait),  # 整个网络的平均等待时间
             env.total_arrived_count,  # 到达目的地的车辆数量
             per_junction_avg_wait,  # 每个路口的平均等待时间
             per_junction_throughput,  # 每个路口的车流量
+            junction_334_wait_times  # JuncID = 334 各方向的等待时间（只有 keyword 作为 key）
         )
 
     def eval_traffic_flow(self, JuncID, time_range):
