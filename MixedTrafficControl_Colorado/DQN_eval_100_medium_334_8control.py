@@ -77,13 +77,11 @@ if __name__ == "__main__":
     results = []
     all_junction_wait_times = defaultdict(list)
     all_junction_throughputs = defaultdict(list)
-    # Data storage structure
     evaluation_data = {}
     vehicle_path_data_collection = {}
     start_time = time.time()
-    times = 1
+    times = 100
 
-    # 预初始化变量，确保后续可以安全访问
     avg_wait = 0
     total_arrived = 0
     per_junction_avg_wait = {junc_id: 0 for junc_id in env.junction_list}
@@ -147,31 +145,10 @@ if __name__ == "__main__":
         results.append((avg_wait, total_arrived))
         evaluation_time = time.time() - evaluation_start
         print(f"Medium_334_8control {rv_rate}: Evaluation {i + 1}/{times} completed: avg_wait={avg_wait}, total_arrived={total_arrived}, time={evaluation_time:.2f}s")
-    
-    # 获取当前时间的时间戳
-    timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-
-    print("Medium: Saving all evaluation data to a single JSON file")
-    # 文件名中加入时间戳
-    with open(f"{args.save_dir}/medium_{rv_rate}_evaluation_results_{timestamp}.json", "w") as json_file:
-        json.dump(evaluation_data, json_file, indent=4)
-
-    # 将每次运行的数据结构中的集合转换为列表，以便 JSON 序列化
-    for run_key, vehicle_data in vehicle_path_data_collection.items():
-        for veh_id, path_data in vehicle_data.items():
-            path_data["incoming_lanes"] = list(path_data["incoming_lanes"])
-            path_data["outgoing_lanes"] = list(path_data["outgoing_lanes"])
-
-    print("Medium: Saving vehicle path data")
-    # 另一个文件名也加入时间戳
-    with open(f"{args.save_dir}/vehicle_path_data_{timestamp}.json", "w") as json_file:
-        json.dump(vehicle_path_data_collection, json_file, indent=4)
 
     total_time = time.time() - start_time
     print(f"\n{rv_rate}: {times} evaluations completed in {total_time:.2f}s.")
 
-    # Unified statistics function
-    # Unified statistics function
     def compute_stats(data, name, is_per_junction=False):
         q1 = np.percentile(data, 25)
         median = np.median(data)
@@ -197,7 +174,7 @@ if __name__ == "__main__":
             }
 
     # 计算 junction_334_wait_times 统计信息
-    print("\n--- Statistics for Junction 334 Waiting Times (Per Keyword) ---")
+    print("\n--- Junction 334 Waiting Times ---")
     for keyword, wait_times in aggregated_junction_334_wait_times.items():
         compute_stats(wait_times, f"Junction 334 - {keyword} Waiting Time")
 
@@ -212,9 +189,9 @@ if __name__ == "__main__":
     avg_wait_results = [r[0] for r in results]
     total_arrived_results = [r[1] for r in results]
 
-    print(f"\nMedium_8control_{rv_rate}: Overall Average Wait Time:")
+    print(f"\nMedium_334_8control_{rv_rate}: Overall Average Wait Time:")
     compute_stats(avg_wait_results, "Average Wait Time")
-    print(f"\nMedium_8control_{rv_rate}: Overall Total Arrived:")
+    print(f"\nMedium_334_8control_{rv_rate}: Overall Total Arrived:")
     compute_stats(total_arrived_results, "Total Arrived")
 
     algo.stop()
