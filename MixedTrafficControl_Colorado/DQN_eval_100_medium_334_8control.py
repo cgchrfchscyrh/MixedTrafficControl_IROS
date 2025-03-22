@@ -1,7 +1,6 @@
-import time, json, datetime
 import numpy as np #type:ignore
 from ray.rllib.algorithms.algorithm import Algorithm #type:ignore
-import argparse, traci
+import argparse, time
 import ray #type:ignore
 from Env_medium import Env
 from collections import defaultdict
@@ -77,8 +76,6 @@ if __name__ == "__main__":
     results = []
     all_junction_wait_times = defaultdict(list)
     all_junction_throughputs = defaultdict(list)
-    evaluation_data = {}
-    vehicle_path_data_collection = {}
     start_time = time.time()
     times = 100
 
@@ -91,7 +88,7 @@ if __name__ == "__main__":
     aggregated_junction_334_wait_times = {}
 
     for i in range(times):
-        print(f"{rv_rate}: Starting evaluation {i + 1}/{times}...")
+        print(f"{rv_rate}: Evaluating {i + 1}/{times}...")
         evaluation_start = time.time()
         dones = truncated = {}
         dones['__all__'] = truncated['__all__'] = False
@@ -109,21 +106,6 @@ if __name__ == "__main__":
 
             # **如果 episode 结束，不管是因 `dones` 还是 `truncated`，先统计数据**
             if dones['__all__'] or truncated['__all__']:
-                run_key = f"run_{i + 1}"
-                evaluation_data[run_key] = {"junctions": {}}
-
-                for junc_id in env.junction_list:
-                    junction_stats = env.get_junction_stats(junc_id)  # **确保 reset 之前统计数据**
-                    evaluation_data[run_key]["junctions"][junc_id] = {
-                        "total_vehicles_enter": junction_stats["total_vehicles_enter"],
-                        "total_vehicles_pass": junction_stats["total_vehicles_pass"],
-                        "vehicle_types_enter": junction_stats["vehicle_types_enter"],
-                        "vehicle_types_pass": junction_stats["vehicle_types_pass"],
-                        "vehicle_paths": junction_stats["vehicle_paths"],
-                    }
-
-                vehicle_path_data_collection[run_key] = env.vehicle_path_data
-                # avg_wait, total_arrived, per_junction_avg_wait, per_junction_throughput = env.monitor.evaluate(env)
                 avg_wait, total_arrived, per_junction_avg_wait, per_junction_throughput, junction_334_wait_times = env.monitor.evaluate(env)
 
                 # **累积 junction_334_wait_times 数据**
