@@ -692,8 +692,6 @@ class Env(MultiAgentEnv):
                     if veh.id not in self.veh_waiting_juncs.keys(): #该车辆尚未进入过任何路口
                         self.veh_waiting_juncs[veh.id] = dict()
                         self.veh_waiting_juncs[veh.id][JuncID] = accumulating_waiting
-                        # 更新直方图数据
-                        # self.junction_waiting_histograms[JuncID].append(accumulating_waiting)
                     else:
                         prev_wtm = 0 #存储车辆在其他路口的等待时间
                         for prev_JuncID in self.veh_waiting_juncs[veh.id].keys(): #遍历该车辆在veh_waiting_juncs中的所有已记录路口ID（prev_JuncID）
@@ -704,7 +702,6 @@ class Env(MultiAgentEnv):
                             self.veh_waiting_juncs[veh.id][JuncID] = accumulating_waiting - prev_wtm
                         else:
                             self.veh_waiting_juncs[veh.id][JuncID] = accumulating_waiting
-                    # print("veh:", veh.id, "Junc:", JuncID, "WT:", self.veh_waiting_juncs[veh.id][JuncID])
             
                 ## updating control queue and waiting time of queue
                 if self.map.get_distance_to_intersection(veh)<=self.control_zone_length:
@@ -714,11 +711,6 @@ class Env(MultiAgentEnv):
                     if veh.type == 'RL' and JuncID in self.junction_list:
                         self.control_queue[JuncID][keyword].extend([veh])
                         self.control_queue_waiting_time[JuncID][keyword].extend([self.veh_waiting_juncs[veh.id][JuncID]])
-
-                    # # 新增：记录每个路口的等待时间分布（直方图）
-                    # if JuncID not in self.all_waiting_time_histograms:
-                    #     self.all_waiting_time_histograms[JuncID] = {kw: [] for kw in self.keywords_order}
-                    # self.all_waiting_time_histograms[JuncID][keyword].extend([self.veh_waiting_juncs[veh.id][JuncID]])
                     
         for JuncID in all_junction_list:
             weighted_sum = 0
@@ -810,11 +802,13 @@ class Env(MultiAgentEnv):
 
         self.new_arrived = {self.vehicles[veh_id] for veh_id in sim_res.arrived_vehicles_ids}
         self.new_collided = {self.vehicles[veh_id] for veh_id in sim_res.colliding_vehicles_ids}
+        collisions = self.sumo_interface.tc.simulation.getCollisions()
 
-        if len(self.new_collided) > 0:
+        if len(collisions) > 0:
             print('\nStep:', self._step)
-            print('Collision vehs:', self.new_collided)
-            print('Collision veh types:', [veh.type for veh in self.new_collided])
+            print('Collisions:', collisions)
+            # print('Collision vehs:', self.new_collided)
+            # print('Collision veh types:', [veh.type for veh in self.new_collided])
 
         self.new_arrived -= self.new_collided # Don't count collided vehicles as "arrived"
 
