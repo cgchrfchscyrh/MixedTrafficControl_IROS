@@ -807,6 +807,8 @@ class Env(MultiAgentEnv):
         if len(collisions) > 0:
             print('\nStep:', self._step)
             print('Collisions:', collisions)
+            print('Collider:', collisions[0].collider, self.vehicles[collisions[0].collider].type)
+            print('Victim:', collisions[0].victim, self.vehicles[collisions[0].victim].type)
             # print('Collision vehs:', self.new_collided)
             # print('Collision veh types:', [veh.type for veh in self.new_collided])
 
