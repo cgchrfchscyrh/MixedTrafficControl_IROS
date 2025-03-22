@@ -78,6 +78,8 @@ class Env(MultiAgentEnv):
         self.total_departed_count  = 0  # 记录进入网络的车辆数
         self.total_arrived_count = 0  # 记录离开网络的车辆数
         # self.traffic_flow_history = []  # 用于记录历史的车流量数据
+
+        # self.total_collisions = 0  # 记录总碰撞次数
         
         #新增，记录每个路口按方向的等待时间分布
         # self.all_waiting_time_histograms = {JuncID: {kw: [] for kw in self.keywords_order} for JuncID in all_junction_list}
@@ -315,54 +317,6 @@ class Env(MultiAgentEnv):
                             # 获取车辆类型
                             self.incoming_vehicle_types[junc_id][self.vehicles[veh_id].type] += 1
 
-    # def update_vehicle_path_data(self):
-    #     """
-    #     记录每辆车当前所在的路段和车道，并分类为 incoming edges 或 outgoing edges
-    #     仅在车辆位于控制路口的相关边时保存数据。
-    #     """
-    #     # 获取当前所有车辆的ID
-    #     vehicle_ids = traci.vehicle.getIDList()
-
-    #     # 遍历每一辆车
-    #     for veh_id in vehicle_ids:
-    #         # 获取车辆当前所在的边和车道
-    #         current_edge_id = traci.vehicle.getRoadID(veh_id)
-    #         current_lane_id = traci.vehicle.getLaneID(veh_id)
-
-    #         facing_junction_id = self.map.get_facing_intersection(current_edge_id)
-    #         # current_time = traci.simulation.getTime()  # 获取当前时间步
-    #         # # print(f"Current timestep: {current_time}")  # 打印当前时间步
-    #         # if veh_id == "13":
-    #         #     print("13: ", current_time, current_edge_id)
-                
-    #         # 如果当前边不属于任何控制路口的 incoming 或 outgoing edges，跳过
-    #         is_control_edge = False
-    #         for junc_id in self.junction_list:
-    #             if (current_edge_id in self.all_junction_incoming_edges[junc_id] or 
-    #                 current_edge_id in self.all_junction_outgoing_edges[junc_id]):
-    #                 is_control_edge = True
-    #                 break
-
-    #         if not is_control_edge:
-    #             continue
-
-    #         # 初始化车辆路径记录
-    #         if veh_id not in self.vehicle_path_data:
-    #             self.vehicle_path_data[veh_id] = {
-    #                 "incoming_lanes": set(),
-    #                 "outgoing_lanes": set()
-    #             }
-
-    #         # 遍历控制路口，检查车辆是否在这些路口的 incoming 或 outgoing edges 上
-    #         for junc_id in self.junction_list:
-    #             # 检查是否在当前路口的 incoming edges 上
-    #             if current_edge_id in self.all_junction_incoming_edges[junc_id]:
-    #                 self.vehicle_path_data[veh_id]["incoming_lanes"].add(current_lane_id)
-                    
-    #                 # 检查是否在当前路口的 outgoing edges 上
-    #                 if current_edge_id in self.all_junction_outgoing_edges[junc_id]:
-    #                     self.vehicle_path_data[veh_id]["outgoing_lanes"].add(current_lane_id)
-
     def get_junction_stats(self, junc_id):
         """
         获取指定路口的统计信息, 包括到达车辆总数、车辆类型分布, 以及每辆车的出发和到达lane。
@@ -569,7 +523,7 @@ class Env(MultiAgentEnv):
     # def change_spawn_rl_prob(self, edge_id, prob):
     #     self.spawn_rl_prob[edge_id] = prob
 
-    def conflict_predetection(self, junc, ori):
+    def conflict_predetection(self, JuncID, ori):
         # detect potential conflict, refer to conflict resolving mechanism
         # input: junc:junction id, ori: moving direction
         # output: True: conflict or potential conflict, False: no conflict detected
@@ -578,19 +532,21 @@ class Env(MultiAgentEnv):
             if ori in pair_set:
                 for k in pair_set:
                     if k!= ori:
-                        allowing_ori.extend([k])
+                        allowing_ori.extend([k]) #遍历 UNCONFLICT_SET（一个定义了不冲突方向的集合），将与 ori 不冲突的方向加入 allowing_ori
+                        #目的是确定在当前路口哪些方向是允许的、不冲突的
+
         if self.conflict_resolve_mechanism_type=='flexible':
-            if ori in self.previous_global_waiting[junc]['largest']:
-                for key in self.inner_lane_occmap[junc].keys():
-                    if max(self.inner_lane_occmap[junc][key][:3])>0 and key not in allowing_ori:
+            if ori in self.previous_global_waiting[JuncID]['largest']:
+                for keyword in self.inner_lane_occmap[JuncID].keys():
+                    if max(self.inner_lane_occmap[JuncID][keyword][:3])>0 and keyword not in allowing_ori:
                         return True
             else:
-                for key in self.inner_lane_occmap[junc].keys():
-                    if max(self.inner_lane_occmap[junc][key][:8])>0 and key not in allowing_ori:
+                for keyword in self.inner_lane_occmap[JuncID].keys():
+                    if max(self.inner_lane_occmap[JuncID][keyword][:8])>0 and keyword not in allowing_ori:
                         return True
         elif self.conflict_resolve_mechanism_type=='standard':
-            for key in self.inner_lane_occmap[junc].keys():
-                if max(self.inner_lane_occmap[junc][key][:8])>0 and key not in allowing_ori:
+            for keyword in self.inner_lane_occmap[JuncID].keys():
+                if max(self.inner_lane_occmap[JuncID][keyword][:8])>0 and keyword not in allowing_ori:
                     return True
         elif self.conflict_resolve_mechanism_type=='off':
             pass
@@ -699,34 +655,6 @@ class Env(MultiAgentEnv):
                 self.inner_lane_newly_enter[JuncID][keyword] = []
                 self.inner_lane_occmap[JuncID][keyword] = [0 for _ in range(10)]
 
-        # one_vehicle = True
-        # for veh in self.vehicles:
-        #     if len(veh.road_id) == 0:
-        #         continue # 忽略无效车辆信息
-
-        #     if veh.road_id[0] == ':':  # 判断车辆是否在路口内部
-        #         junc_id = veh.road_id[1:].split('_')[0]  # 去掉 ":" 并提取路口 ID
-
-        #         if junc_id in all_junction_list:
-        #             if self.print_debug and one_vehicle:
-        #                 print("veh:", veh, " road_id:", veh.road_id, " junc_id:", junc_id)
-        #                 # print("counts:", self.intersection_traffic_counts)
-        #                 # one_vehicle = False
-
-        #             # 初始化车辆历史
-        #             if veh not in self.vehicle_history:
-        #                 self.vehicle_history[veh] = set()
-
-        #             # 如果车辆尚未被记录经过该路口，更新流量计数
-        #             if junc_id not in self.vehicle_history[veh]:
-        #                 self.vehicle_history[veh].add(junc_id)
-
-        #                 # 确保路口计数器初始化
-        #                 if junc_id not in self.intersection_traffic_counts:
-        #                     self.intersection_traffic_counts[junc_id] = 0
-
-        #                 self.intersection_traffic_counts[junc_id] += 1
-
         for veh in self.vehicles:
             if len(veh.road_id)==0:
                 ## avoid invalid vehicle information
@@ -739,8 +667,16 @@ class Env(MultiAgentEnv):
                         break
                 last_dash_ind = len(veh.road_id)-1-ind
                 if edge_label and veh.road_id[1:last_dash_ind] in self.junction_list:
-                    self.inner_lane_obs[veh.road_id[1:last_dash_ind]][edge_label+direction].extend([veh])
-                    self.inner_lane_occmap[veh.road_id[1:last_dash_ind]][edge_label+direction][min(int(10*veh.laneposition/self.map.edge_length(veh.road_id)), 9)] = 1
+                    JuncID = veh.road_id[1:last_dash_ind]
+                    keyword = edge_label + direction
+                    segment = min(int(10*veh.laneposition/self.map.edge_length(veh.road_id)), 9)
+
+                    self.inner_lane_obs[JuncID][keyword].extend([veh])
+                    # self.inner_lane_obs[veh.road_id[1:last_dash_ind]][edge_label+direction].extend([veh])
+
+                    self.inner_lane_occmap[JuncID][keyword][segment] = 1
+                    # self.inner_lane_occmap[veh.road_id[1:last_dash_ind]][edge_label+direction][min(int(10*veh.laneposition/self.map.edge_length(veh.road_id)), 9)] = 1
+                    
                     if veh not in self.prev_inner[veh.road_id[1:last_dash_ind]][edge_label+direction]:
                         self.inner_lane_newly_enter[veh.road_id[1:last_dash_ind]][edge_label+direction].extend([veh])
                     self.inner_speed[veh.road_id[1:last_dash_ind]].extend([veh.speed])
@@ -766,12 +702,8 @@ class Env(MultiAgentEnv):
                         if accumulating_waiting - prev_wtm >= 0:
                             #当前累计等待时间比之前路口的等待时间总和更大，说明车辆在当前路口确实有等待时间
                             self.veh_waiting_juncs[veh.id][JuncID] = accumulating_waiting - prev_wtm
-                            # 更新直方图数据
-                            # self.junction_waiting_histograms[JuncID].append(accumulating_waiting - prev_wtm)
                         else:
                             self.veh_waiting_juncs[veh.id][JuncID] = accumulating_waiting
-                            # self.junction_waiting_histograms[JuncID].append(accumulating_waiting)
-
                     # print("veh:", veh.id, "Junc:", JuncID, "WT:", self.veh_waiting_juncs[veh.id][JuncID])
             
                 ## updating control queue and waiting time of queue
@@ -848,39 +780,6 @@ class Env(MultiAgentEnv):
         # sumo step
         self.sumo_interface.step() # self.tc.simulationStep()
 
-        # 获取当前所有车辆的位置信息
-        # all_vehicle_ids = self.sumo_interface.tc.vehicle.getIDList()
-        # one_vehicle = True
-        # sim_res = self.sumo_interface.get_sim_info()
-        # for veh_id in sim_res.departed_vehicles_ids:
-        #     road_id = self.sumo_interface.get_vehicle_edge(veh_id)
-        #     # print("veh_id:", veh_id, " road_id:", road_id)
-        #     if len(road_id) == 0:
-        #         continue # 忽略无效车辆信息
-
-        #     if road_id[0] == ':':  # 判断车辆是否在路口内部
-        #         junc_id = road_id[1:].split('_')[0]  # 去掉 ":" 并提取路口 ID
-
-        #         if junc_id in all_junction_list:
-        #             if self.print_debug and one_vehicle:
-        #                 print("veh:", veh_id, " road_id:", road_id, " junc_id:", junc_id)
-        #                 # print("counts:", self.intersection_traffic_counts)
-        #                 # one_vehicle = False
-
-        #             # 初始化车辆历史
-        #             if veh_id not in self.vehicle_history:
-        #                 self.vehicle_history[veh_id] = set()
-
-        #             # 如果车辆尚未被记录经过该路口，更新流量计数
-        #             if junc_id not in self.vehicle_history[veh_id]:
-        #                 self.vehicle_history[veh_id].add(junc_id)
-
-        #                 # 确保路口计数器初始化
-        #                 if junc_id not in self.intersection_traffic_counts:
-        #                     self.intersection_traffic_counts[junc_id] = 0
-
-        #                 self.intersection_traffic_counts[junc_id] += 1
-
         # 使用 SUMO API 获取当前步进入和离开网络的车辆数量
         current_departed = self.sumo_interface.tc.simulation.getDepartedNumber()
         current_arrived = self.sumo_interface.tc.simulation.getArrivedNumber()
@@ -911,6 +810,12 @@ class Env(MultiAgentEnv):
 
         self.new_arrived = {self.vehicles[veh_id] for veh_id in sim_res.arrived_vehicles_ids}
         self.new_collided = {self.vehicles[veh_id] for veh_id in sim_res.colliding_vehicles_ids}
+
+        if len(self.new_collided) > 0:
+            print('\nStep:', self._step)
+            print('Collision vehs:', self.new_collided)
+            print('Collision veh types:', [veh.type for veh in self.new_collided])
+
         self.new_arrived -= self.new_collided # Don't count collided vehicles as "arrived"
 
         # remove arrived vehicles from Env
@@ -1004,9 +909,6 @@ class Env(MultiAgentEnv):
         dones['__all__'] = False
 
         infos = {}
-        # infos["departed_count"] = departed_count
-        # infos["arrived_count"] = arrived_count
-
         truncated = {}
         truncated['__all__'] = False
         if self._step >= self._max_episode_steps:
@@ -1018,9 +920,6 @@ class Env(MultiAgentEnv):
         self.monitor.step(self)
 
         self.conflict_vehids=[]
-        # self._print_debug('finish process step')
-        # if len(dict_tolist(rewards))>0 and self.print_debug:
-        #     print('avg reward: '+str(np.array(dict_tolist(rewards)).mean())+' max reward: '+str(np.array(dict_tolist(rewards)).max())+' min reward: '+str(np.array(dict_tolist(rewards)).min()))
 
         return obs, rewards, dones, truncated, infos
 
