@@ -77,7 +77,7 @@ if __name__ == "__main__":
     all_junction_wait_times = defaultdict(list)
     all_junction_throughputs = defaultdict(list)
     start_time = time.time()
-    times = 100
+    times = 1
 
     avg_wait = 0
     total_arrived = 0
@@ -86,6 +86,12 @@ if __name__ == "__main__":
 
     # 存储 100 次循环中 junction_334_wait_times 的数据，按 keyword 进行分类
     aggregated_junction_334_wait_times = {}
+
+    collisions = []
+    RV_RV_collisions = []
+    RV_HV_collisions = []
+    HV_HV_collisions = []
+    standing_collisions = []
 
     for i in range(times):
         print(f"{rv_rate}: Evaluating {i + 1}/{times}...")
@@ -108,6 +114,12 @@ if __name__ == "__main__":
             if dones['__all__'] or truncated['__all__']:
                 avg_wait, total_arrived, per_junction_avg_wait, per_junction_throughput, junction_334_wait_times = env.monitor.evaluate(env)
 
+                collisions.append(env.collisions)
+                RV_RV_collisions.append(env.RV_RV_collisions)
+                RV_HV_collisions.append(env.RV_HV_collisions)
+                HV_HV_collisions.append(env.HV_HV_collisions)
+                standing_collisions.append(env.standing_collisions)
+
                 # **累积 junction_334_wait_times 数据**
                 for keyword, wait_time in junction_334_wait_times.items():
                     if keyword not in aggregated_junction_334_wait_times:
@@ -126,7 +138,9 @@ if __name__ == "__main__":
         # Append overall results
         results.append((avg_wait, total_arrived))
         evaluation_time = time.time() - evaluation_start
-        print(f"Medium_334_8control {rv_rate}: Evaluation {i + 1}/{times} completed: avg_wait={avg_wait}, total_arrived={total_arrived}, time={evaluation_time:.2f}s")
+        print(f"Medium_334_8control {rv_rate}: Evaluation {i + 1}/{times} completed: avg_wait={avg_wait}, total_arrived={total_arrived},\
+               collisions={collisions[-1]}, RV_RV_collisions={RV_RV_collisions[-1]}, RV_HV_collisions={RV_HV_collisions[-1]},\
+               HV_HV_collisions={HV_HV_collisions[-1]}, standing_collisions={standing_collisions[-1]}, time={evaluation_time:.2f}s")
 
     total_time = time.time() - start_time
     print(f"\n{rv_rate}: {times} evaluations completed in {total_time:.2f}s.")
@@ -168,6 +182,17 @@ if __name__ == "__main__":
         compute_stats(all_junction_throughputs[junc_id], f"Junction {junc_id} - Throughput")
 
     # Compute overall statistics
+    print(f"\n--- Collisions ---")
+    compute_stats(collisions, "Collisions")
+    print(f"\n--- RV_RV_collisions ---")
+    compute_stats(RV_RV_collisions, "RV_RV_collisions")
+    print(f"\n--- RV_HV_collisions ---")
+    compute_stats(RV_HV_collisions, "RV_HV_collisions")
+    print(f"\n--- HV_HV_collisions ---")
+    compute_stats(HV_HV_collisions, "HV_HV_collisions")
+    print(f"\n--- standing_collisions ---")
+    compute_stats(standing_collisions, "standing_collisions")
+
     avg_wait_results = [r[0] for r in results]
     total_arrived_results = [r[1] for r in results]
 
