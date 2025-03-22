@@ -510,17 +510,19 @@ class Env(MultiAgentEnv):
                         #目的是确定在当前路口哪些方向是允许的、不冲突的
 
         if self.conflict_resolve_mechanism_type=='flexible':
-            if ori in self.previous_global_waiting[JuncID]['largest']:
-                for keyword in self.inner_lane_occmap[JuncID].keys():
-                    if max(self.inner_lane_occmap[JuncID][keyword][:3])>0 and keyword not in allowing_ori:
+            if ori in self.previous_global_waiting[JuncID]['largest']: #
+                for keyword in self.inner_lane_occmap[JuncID].keys(): #遍历当前路口的所有keyword方向
+                    if max(self.inner_lane_occmap[JuncID][keyword][:3]) > 0 and keyword not in allowing_ori: 
+                        #如果当前keyword的lane上的前三个segment有车辆且不在allowing_ori中
                         return True
             else:
                 for keyword in self.inner_lane_occmap[JuncID].keys():
-                    if max(self.inner_lane_occmap[JuncID][keyword][:8])>0 and keyword not in allowing_ori:
+                    if max(self.inner_lane_occmap[JuncID][keyword][:8]) > 0 and keyword not in allowing_ori: 
+                        #如果当前keyword的lane上前八个segment有车辆且不在allowing_ori中
                         return True
         elif self.conflict_resolve_mechanism_type=='standard':
             for keyword in self.inner_lane_occmap[JuncID].keys():
-                if max(self.inner_lane_occmap[JuncID][keyword][:8])>0 and keyword not in allowing_ori:
+                if max(self.inner_lane_occmap[JuncID][keyword][:8]) > 0 and keyword not in allowing_ori:
                     return True
         elif self.conflict_resolve_mechanism_type=='off':
             pass
@@ -941,6 +943,12 @@ class Env(MultiAgentEnv):
         self.outgoing_vehicle_history = {junc: set() for junc in all_junction_list}
         self.incoming_vehicle_types = {junc_id: {"RL": 0, "IDM": 0} for junc_id in all_junction_list}
         self.outgoing_vehicle_types = {junc_id: {"RL": 0, "IDM": 0} for junc_id in all_junction_list}
+
+        self.collisions = 0
+        self.RV_RV_collisions = 0
+        self.RV_HV_collisions = 0
+        self.HV_HV_collisions = 0
+        self.standing_collisions = 0
 
         # 重置 vehicle_lane_stats
         self.vehicle_lane_stats = {junc_id: {} for junc_id in all_junction_list}
