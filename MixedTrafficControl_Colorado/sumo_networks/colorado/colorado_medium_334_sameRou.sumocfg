@@ -1,0 +1,10 @@
+<configuration>
+    <input>
+        <net-file value="colorado_medium_334.net.xml"/>
+        <route-files value="colorado_medium_1000s_7911v_1sInterval_NSSN.rou.xml"/>
+    </input>
+    <report>
+        <no-step-log value="true"/>
+        <no-warnings value="true"/>
+    </report>
+</configuration>
