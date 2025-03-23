@@ -2,7 +2,7 @@ import xml.etree.ElementTree as ET
 import random
 
 # 设置随机种子，使得 random.choice() 的结果可复现
-# random.seed(42)
+random.seed(42)
 
 # 输入和输出文件
 filename = 'file/colorado_medium_334.trips.xml'  # trips 文件名
