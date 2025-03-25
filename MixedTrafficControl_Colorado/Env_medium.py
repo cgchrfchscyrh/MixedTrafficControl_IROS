@@ -117,6 +117,10 @@ class Env(MultiAgentEnv):
         self.HV_HV_collisions = 0
         self.standing_collisions = 0
 
+        self.LL_collision = 0
+        self.Ls_collision = 0
+        self.ss_collision = 0
+
         self.init_env()
         self.previous_global_waiting = dict()
         self.all_previous_global_waiting = dict()
@@ -643,10 +647,11 @@ class Env(MultiAgentEnv):
                         break
                 last_dash_ind = len(veh.road_id)-1-ind
                 if edge_label and veh.road_id[1:last_dash_ind] in self.junction_list:
-                    JuncID = veh.road_id[1:last_dash_ind]
-                    keyword = edge_label + direction
-                    segment = min(int(10*veh.laneposition/self.map.edge_length(veh.road_id)), 9)
-
+                    JuncID = veh.road_id[1:last_dash_ind] #获取车辆所在的路口ID
+                    keyword = edge_label + direction  #获取车辆的运动方向
+                    segment = min(int(10*veh.laneposition/self.map.edge_length(veh.road_id)), 9) #将车辆的位置映射到0-9的segment上
+                        #The position of the vehicle along the lane (the distance from the front bumper to the start of the lane in [m])
+                        
                     self.inner_lane_obs[JuncID][keyword].extend([veh])
                     # self.inner_lane_obs[veh.road_id[1:last_dash_ind]][edge_label+direction].extend([veh])
 
@@ -731,19 +736,31 @@ class Env(MultiAgentEnv):
             print('error!! action dict is invalid')
             return dict()
 
+        # if self._step > 600:
+        #     print('\nStep:', self._step)
+
         # execute action in the sumo env
         for virtual_id in action.keys():
             veh_id = self.convert_virtual_id_to_real_id(virtual_id)
+
             if action[virtual_id] == 1:
                 JuncID, ego_dir = self.map.get_veh_moving_direction(self.rl_vehicles[veh_id])
                 if self.conflict_predetection(JuncID, ego_dir):
                     ## conflict
                     self.sumo_interface.accl_control(self.rl_vehicles[veh_id], self.soft_deceleration(self.rl_vehicles[veh_id]))
                     self.conflict_vehids.extend([veh_id])
+
+                    # if self._step > 600:
+                    #     print('veh_id:', veh_id, 'Go but conflict')
                 else:
                     self.sumo_interface.accl_control(self.rl_vehicles[veh_id], self.max_acc)
+                    # if self._step > 600:
+                    #     print('veh_id:', veh_id, 'Go without conflict')
+
             elif action[virtual_id] == 0:
                 self.sumo_interface.accl_control(self.rl_vehicles[veh_id], self.soft_deceleration(self.rl_vehicles[veh_id]))
+                # if self._step > 600:
+                #     print('veh_id:', veh_id, 'Stop')
 
         # sumo step
         self.sumo_interface.step() # self.tc.simulationStep()
@@ -778,31 +795,6 @@ class Env(MultiAgentEnv):
 
         self.new_arrived = {self.vehicles[veh_id] for veh_id in sim_res.arrived_vehicles_ids}
         self.new_collided = {self.vehicles[veh_id] for veh_id in sim_res.colliding_vehicles_ids}
-        collisions = self.sumo_interface.tc.simulation.getCollisions()
-
-        if len(collisions) > 0:
-            # print('\nStep:', self._step)
-            # print('Collisions:', collisions)
-            # print('Collider:', collisions[0].collider, self.vehicles[collisions[0].collider].type)
-            # print('Victim:', collisions[0].victim, self.vehicles[collisions[0].victim].type)
-
-            for collision in collisions:
-                self.collisions += 1
-                collider_type = self.vehicles[collision.collider].type
-                victim_type = self.vehicles[collision.victim].type
-
-                if collider_type == 'RL' and victim_type == 'RL':
-                    self.RV_RV_collisions += 1
-                elif collider_type == 'RL' and victim_type == 'IDM':
-                    self.RV_HV_collisions += 1
-                elif collider_type == 'IDM' and victim_type == 'RL':
-                    self.RV_HV_collisions += 1
-                elif collider_type == 'IDM' and victim_type == 'IDM':
-                    self.HV_HV_collisions += 1
-
-                if collision.colliderSpeed < 0.1 or collision.victimSpeed < 0.1:
-                    self.standing_collisions += 1
-
         self.new_arrived -= self.new_collided # Don't count collided vehicles as "arrived"
 
         # remove arrived vehicles from Env
@@ -828,6 +820,47 @@ class Env(MultiAgentEnv):
         if eval:
             self.update_traffic_flow()
         # self.update_vehicle_path_data()
+        
+        collisions = self.sumo_interface.tc.simulation.getCollisions()
+        if len(collisions) > 0:
+            print('\nStep:', self._step)
+
+            for collision in collisions:
+                # print('\nCollision:', collision)
+                # print('Collider:', self.vehicles[collisions[0].collider].type)
+                # print('Victim:', self.vehicles[collisions[0].victim].type)
+
+                self.collisions += 1
+                collider_type = self.vehicles[collision.collider].type
+                victim_type = self.vehicles[collision.victim].type
+                collider_lane = traci.vehicle.getLaneID(collision.collider)
+                victim_lane = traci.vehicle.getLaneID(collision.victim)
+
+                print('Collider Lane:', collider_lane, ' Victim Lane:', victim_lane)
+                collider_direction = [conn[6] for conn in traci.lane.getLinks(collider_lane, extended=True)]  # Index 6 contains the direction
+                victim_direction = [conn[6] for conn in traci.lane.getLinks(victim_lane, extended=True)]  # Index 6 contains the direction
+                
+                if (collider_direction == 'L' and victim_direction == 's') or (collider_direction == 's' and victim_direction == 'L'):
+                    print('Left-straight collision')
+                    self.Ls_collision += 1
+                elif collider_direction == 'L' and victim_direction == 'L':
+                    print('Left-left collision')
+                    self.LL_collision += 1
+                else:
+                    print('Straight-straight collision')
+                    self.ss_collision += 1
+
+                if collider_type == 'RL' and victim_type == 'RL':
+                    self.RV_RV_collisions += 1
+                elif collider_type == 'RL' and victim_type == 'IDM':
+                    self.RV_HV_collisions += 1
+                elif collider_type == 'IDM' and victim_type == 'RL':
+                    self.RV_HV_collisions += 1
+                elif collider_type == 'IDM' and victim_type == 'IDM':
+                    self.HV_HV_collisions += 1
+
+                if collision.colliderSpeed < 0.1 or collision.victimSpeed < 0.1:
+                    self.standing_collisions += 1
 
         obs = {}
         rewards = {}
@@ -949,6 +982,10 @@ class Env(MultiAgentEnv):
         self.RV_HV_collisions = 0
         self.HV_HV_collisions = 0
         self.standing_collisions = 0
+
+        self.LL_collision = 0
+        self.Ls_collision = 0
+        self.ss_collision = 0
 
         # 重置 vehicle_lane_stats
         self.vehicle_lane_stats = {junc_id: {} for junc_id in all_junction_list}
