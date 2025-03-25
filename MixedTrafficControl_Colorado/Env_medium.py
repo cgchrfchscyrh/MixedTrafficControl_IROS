@@ -837,18 +837,22 @@ class Env(MultiAgentEnv):
                 victim_lane = traci.vehicle.getLaneID(collision.victim)
 
                 print('Collider Lane:', collider_lane, ' Victim Lane:', victim_lane)
-                collider_direction = [conn[6] for conn in traci.lane.getLinks(collider_lane, extended=True)]  # Index 6 contains the direction
-                victim_direction = [conn[6] for conn in traci.lane.getLinks(victim_lane, extended=True)]  # Index 6 contains the direction
-                
-                if (collider_direction == 'L' and victim_direction == 's') or (collider_direction == 's' and victim_direction == 'L'):
-                    print('Left-straight collision')
-                    self.Ls_collision += 1
-                elif collider_direction == 'L' and victim_direction == 'L':
-                    print('Left-left collision')
-                    self.LL_collision += 1
-                else:
-                    print('Straight-straight collision')
-                    self.ss_collision += 1
+
+                if collider_lane != '':
+                    collider_direction = [conn[6] for conn in traci.lane.getLinks(collider_lane, extended=True)][0]  # Index 6 contains the direction
+                    victim_direction = [conn[6] for conn in traci.lane.getLinks(victim_lane, extended=True)][0]  # Index 6 contains the direction
+                    
+                    print('Collider Direction:', collider_direction, ' Victim Direction:', victim_direction)
+
+                    if (collider_direction == 'l' and victim_direction == 's') or (collider_direction == 's' and victim_direction == 'l'):
+                        print('Left-straight collision')
+                        self.Ls_collision += 1
+                    elif collider_direction == 'l' and victim_direction == 'l':
+                        print('Left-left collision')
+                        self.LL_collision += 1
+                    else:
+                        print('Straight-straight collision')
+                        self.ss_collision += 1
 
                 if collider_type == 'RL' and victim_type == 'RL':
                     self.RV_RV_collisions += 1
