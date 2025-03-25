@@ -124,9 +124,9 @@ if __name__ == "__main__":
                 RV_HV_collisions.append(env.RV_HV_collisions)
                 HV_HV_collisions.append(env.HV_HV_collisions)
                 standing_collisions.append(env.standing_collisions)
-                LL_collisions.append(env.LL_collisions)
-                Ls_collisions.append(env.Ls_collisions)
-                ss_collisions.append(env.ss_collisions)
+                LL_collisions.append(env.LL_collision)
+                Ls_collisions.append(env.Ls_collision)
+                ss_collisions.append(env.ss_collision)
 
                 # **累积 junction_334_wait_times 数据**
                 for keyword, wait_time in junction_334_wait_times.items():
