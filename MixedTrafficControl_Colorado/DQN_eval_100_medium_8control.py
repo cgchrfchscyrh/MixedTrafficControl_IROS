@@ -1,6 +1,7 @@
+import time, json, datetime
 import numpy as np #type:ignore
 from ray.rllib.algorithms.algorithm import Algorithm #type:ignore
-import argparse, time
+import argparse, traci
 import ray #type:ignore
 from Env_medium import Env
 from collections import defaultdict
@@ -62,9 +63,9 @@ if __name__ == "__main__":
                 'joinedS_8156136076_8156136077_cluster_1289585639_439979990_8156136067_8156136068_#1more'],
         "spawn_rl_prob": {},
         "probablity_RL": rv_rate,
-        "cfg":'sumo_networks/colorado/colorado_medium_334_sameRou.sumocfg',
+        "cfg":'sumo_networks/colorado/colorado_medium.sumocfg',
         "render": False,
-        "map_xml":'sumo_networks/colorado/colorado_medium_334.net.xml',
+        "map_xml":'sumo_networks/colorado/colorado_medium.net.xml',
         "max_episode_steps": args.stop_timesteps,
         "conflict_mechanism": 'flexible',
         "traffic_light_program": {
@@ -79,6 +80,7 @@ if __name__ == "__main__":
     start_time = time.time()
     times = 100
 
+    # 预初始化变量，确保后续可以安全访问
     avg_wait = 0
     total_arrived = 0
     per_junction_avg_wait = {junc_id: 0 for junc_id in env.junction_list}
@@ -92,6 +94,9 @@ if __name__ == "__main__":
     RV_HV_collisions = []
     HV_HV_collisions = []
     standing_collisions = []
+    LL_collisions = []
+    Ls_collisions = []
+    ss_collisions = []
 
     for i in range(times):
         print(f"{rv_rate}: Evaluating {i + 1}/{times}...")
@@ -113,12 +118,15 @@ if __name__ == "__main__":
             # **如果 episode 结束，不管是因 `dones` 还是 `truncated`，先统计数据**
             if dones['__all__'] or truncated['__all__']:
                 avg_wait, total_arrived, per_junction_avg_wait, per_junction_throughput, junction_334_wait_times = env.monitor.evaluate(env)
-
+                
                 collisions.append(env.collisions)
                 RV_RV_collisions.append(env.RV_RV_collisions)
                 RV_HV_collisions.append(env.RV_HV_collisions)
                 HV_HV_collisions.append(env.HV_HV_collisions)
                 standing_collisions.append(env.standing_collisions)
+                LL_collisions.append(env.LL_collisions)
+                Ls_collisions.append(env.Ls_collisions)
+                ss_collisions.append(env.ss_collisions)
 
                 # **累积 junction_334_wait_times 数据**
                 for keyword, wait_time in junction_334_wait_times.items():
@@ -140,7 +148,9 @@ if __name__ == "__main__":
         evaluation_time = time.time() - evaluation_start
         print(f"Medium_334_8control {rv_rate}: Evaluation {i + 1}/{times} completed: avg_wait={avg_wait}, total_arrived={total_arrived},\
                collisions={collisions[-1]}, RV_RV_collisions={RV_RV_collisions[-1]}, RV_HV_collisions={RV_HV_collisions[-1]},\
-               HV_HV_collisions={HV_HV_collisions[-1]}, standing_collisions={standing_collisions[-1]}, time={evaluation_time:.2f}s")
+               HV_HV_collisions={HV_HV_collisions[-1]}, standing_collisions={standing_collisions[-1]}, \
+                LL_collisions={LL_collisions[-1]}, Ls_collisions={Ls_collisions[-1]}, ss_collisions={ss_collisions[-1]},\
+                time={evaluation_time:.2f}s")
 
     total_time = time.time() - start_time
     print(f"\n{rv_rate}: {times} evaluations completed in {total_time:.2f}s.")
@@ -192,13 +202,19 @@ if __name__ == "__main__":
     compute_stats(HV_HV_collisions, "HV_HV_collisions")
     print(f"\n--- standing_collisions ---")
     compute_stats(standing_collisions, "standing_collisions")
+    print(f"\n--- LL_collisions ---")
+    compute_stats(LL_collisions, "LL_collisions")
+    print(f"\n--- Ls_collisions ---")
+    compute_stats(Ls_collisions, "Ls_collisions")
+    print(f"\n--- ss_collisions ---")
+    compute_stats(ss_collisions, "ss_collisions")
 
     avg_wait_results = [r[0] for r in results]
     total_arrived_results = [r[1] for r in results]
 
-    print(f"\nMedium_334_8control_{rv_rate}: Overall Average Wait Time:")
+    print(f"\nMedium_8control_{rv_rate}: Overall Average Wait Time:")
     compute_stats(avg_wait_results, "Average Wait Time")
-    print(f"\nMedium_334_8control_{rv_rate}: Overall Total Arrived:")
+    print(f"\nMedium_8control_{rv_rate}: Overall Total Arrived:")
     compute_stats(total_arrived_results, "Total Arrived")
 
     algo.stop()
