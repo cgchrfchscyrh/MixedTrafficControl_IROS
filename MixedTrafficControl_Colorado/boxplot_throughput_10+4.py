@@ -2,43 +2,43 @@ import matplotlib.pyplot as plt
 
 # 数据
 data_40 = {
-    "Minimum":5.23,
-    "Q1": 5.8,
-    "Median": 5.89,
-    "Q3": 6.06,
-    "Maximum": 6.78
+    "Minimum":443,
+    "Q1": 469.8,
+    "Median": 483.89,
+    "Q3": 497.06,
+    "Maximum": 538.78
 }
 
 data_50 = {
-    "Minimum": 5.28,
-    "Q1": 5.71,
-    "Median": 5.86,
-    "Q3": 6.02,
-    "Maximum": 6.5
+    "Minimum": 435.28,
+    "Q1": 462.71,
+    "Median": 473.86,
+    "Q3": 488.02,
+    "Maximum": 513.5
 }
 
 data_60 = {
-    "Minimum": 5.13,
-    "Q1": 5.55,
-    "Median": 5.72,
-    "Q3": 5.91,
-    "Maximum":  6.72
+    "Minimum": 440.13,
+    "Q1": 470.55,
+    "Median": 481.72,
+    "Q3": 495.91,
+    "Maximum":  524.72
 }
 
 data_70 = {
-    "Minimum": 5.28,
-    "Q1": 5.77,
-    "Median": 5.9,
-    "Q3": 6.02,
-    "Maximum": 6.39
+    "Minimum": 444.28,
+    "Q1": 471.77,
+    "Median": 487.9,
+    "Q3": 496.02,
+    "Maximum": 532.39
 }
 
 data_80 = {
-    "Minimum": 5.35,
-    "Q1": 5.65,
-    "Median": 5.76,
-    "Q3": 5.94,
-    "Maximum": 6.22
+    "Minimum": 435.35,
+    "Q1": 465.65,
+    "Median": 478.76,
+    "Q3": 491.94,
+    "Maximum": 524.22
 }
 
 # data_100 = {
@@ -61,23 +61,24 @@ box_data = [
 ]
 
 # 添加固定值数据
-TL = 6.17
+fixed_value = 454
 
 # 更新箱线图数据
-box_data.append([TL])  # 固定值作为独立数据点
+box_data.append([fixed_value])  # 固定值作为独立数据点
 
 # 绘制箱线图
 fig, ax = plt.subplots()
 ax.boxplot(box_data, vert=True, positions=[40, 50, 60, 70, 80, 120], widths=5, patch_artist=True,
            boxprops=dict(facecolor="lightblue"), medianprops=dict(color="red"))
 
-# ax.boxplot(box_data, vert=True, positions=[20, 60, 70, 80, 90, 100, 120], widths=5, patch_artist=True,
-#            boxprops=dict(facecolor="lightblue"), medianprops=dict(color="red"))
+# boxplot = ax.boxplot(box_data, vert=True, positions=[20, 60, 80, 100], widths=10, patch_artist=True,
+#                      boxprops=dict(facecolor="lightblue"), medianprops=dict(color="red"),
+#                      flierprops=dict(marker='.'))
 
 # 设置标题和轴标签
-plt.title("Average Wait Time of 100 times Evaluation")
+plt.title("Average throughput of 100 times Evaluation")
 plt.xlabel("RV rate")
-plt.ylabel("Time (s)")
+plt.ylabel("Number of vehicles")
 plt.xticks([40, 50, 60, 70, 80, 120], ["40%", "50%", "60%", "70%", "80%", "TL"])
 plt.grid(axis="y", linestyle="--", alpha=0.7)
 

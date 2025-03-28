@@ -2,43 +2,43 @@ import matplotlib.pyplot as plt
 
 # 数据
 data_40 = {
-    "Minimum":5.23,
-    "Q1": 5.8,
-    "Median": 5.89,
-    "Q3": 6.06,
-    "Maximum": 6.78
+    "Minimum":5.0,
+    "Q1": 5.62,
+    "Median": 5.94,
+    "Q3": 6.28,
+    "Maximum": 8.45
 }
 
 data_50 = {
-    "Minimum": 5.28,
-    "Q1": 5.71,
-    "Median": 5.86,
-    "Q3": 6.02,
-    "Maximum": 6.5
+    "Minimum": 5.39,
+    "Q1": 6.73,
+    "Median": 7.02,
+    "Q3": 7.32,
+    "Maximum": 8.57
 }
 
 data_60 = {
-    "Minimum": 5.13,
-    "Q1": 5.55,
-    "Median": 5.72,
-    "Q3": 5.91,
-    "Maximum":  6.72
+    "Minimum": 4.76,
+    "Q1": 5.24,
+    "Median": 5.51,
+    "Q3": 5.78,
+    "Maximum":  7.54
 }
 
 data_70 = {
-    "Minimum": 5.28,
-    "Q1": 5.77,
-    "Median": 5.9,
-    "Q3": 6.02,
-    "Maximum": 6.39
+    "Minimum": 4.76,
+    "Q1": 5.64,
+    "Median": 6.23,
+    "Q3": 6.69,
+    "Maximum": 8.34
 }
 
 data_80 = {
-    "Minimum": 5.35,
-    "Q1": 5.65,
-    "Median": 5.76,
-    "Q3": 5.94,
-    "Maximum": 6.22
+    "Minimum": 4.66,
+    "Q1": 5.55,
+    "Median": 5.95,
+    "Q3": 6.35,
+    "Maximum": 8.03
 }
 
 # data_100 = {

@@ -2,43 +2,43 @@ import matplotlib.pyplot as plt
 
 # 数据
 data_40 = {
-    "Minimum":5.23,
-    "Q1": 5.8,
-    "Median": 5.89,
-    "Q3": 6.06,
-    "Maximum": 6.78
+    "Minimum":5.92,
+    "Q1": 6.64,
+    "Median": 6.9,
+    "Q3": 7.17,
+    "Maximum": 8.37
 }
 
 data_50 = {
-    "Minimum": 5.28,
-    "Q1": 5.71,
-    "Median": 5.86,
-    "Q3": 6.02,
-    "Maximum": 6.5
+    "Minimum": 5.7,
+    "Q1": 6.37,
+    "Median": 6.63,
+    "Q3": 6.94,
+    "Maximum": 8.19
 }
 
 data_60 = {
-    "Minimum": 5.13,
-    "Q1": 5.55,
-    "Median": 5.72,
-    "Q3": 5.91,
-    "Maximum":  6.72
+    "Minimum": 5.38,
+    "Q1": 5.98,
+    "Median": 6.22,
+    "Q3": 6.53,
+    "Maximum": 7.84
 }
 
 data_70 = {
-    "Minimum": 5.28,
-    "Q1": 5.77,
-    "Median": 5.9,
-    "Q3": 6.02,
-    "Maximum": 6.39
+    "Minimum": 5.64,
+    "Q1": 6.18,
+    "Median": 6.36,
+    "Q3": 6.54,
+    "Maximum": 7.47
 }
 
 data_80 = {
-    "Minimum": 5.35,
-    "Q1": 5.65,
-    "Median": 5.76,
-    "Q3": 5.94,
-    "Maximum": 6.22
+    "Minimum": 5.19,
+    "Q1": 5.71,
+    "Median": 5.91,
+    "Q3":  6.24,
+    "Maximum": 10.34
 }
 
 # data_100 = {
@@ -68,17 +68,19 @@ box_data.append([TL])  # 固定值作为独立数据点
 
 # 绘制箱线图
 fig, ax = plt.subplots()
-ax.boxplot(box_data, vert=True, positions=[40, 50, 60, 70, 80, 120], widths=5, patch_artist=True,
-           boxprops=dict(facecolor="lightblue"), medianprops=dict(color="red"))
+ax.boxplot(box_data, vert=True, positions=[40, 50, 60, 70, 80, 90], widths=5, patch_artist=True,
+           boxprops=dict(facecolor="lightblue"), medianprops=dict(color="red"), whis=(0,100))
 
 # ax.boxplot(box_data, vert=True, positions=[20, 60, 70, 80, 90, 100, 120], widths=5, patch_artist=True,
 #            boxprops=dict(facecolor="lightblue"), medianprops=dict(color="red"))
 
 # 设置标题和轴标签
-plt.title("Average Wait Time of 100 times Evaluation")
-plt.xlabel("RV rate")
-plt.ylabel("Time (s)")
-plt.xticks([40, 50, 60, 70, 80, 120], ["40%", "50%", "60%", "70%", "80%", "TL"])
+# plt.title("Average Wait Time of 100 times Evaluation")
+# plt.xlabel("RV rate")
+plt.ylabel("Avg. Waiting Time (s)", fontsize=16)
+plt.xticks([40, 50, 60, 70, 80, 90], ["RV: 40%", "RV: 50%", "RV: 60%", "RV: 70%", "RV: 80%", "TL"], rotation=60, fontsize=16)
+plt.yticks(fontsize=16)
+
 plt.grid(axis="y", linestyle="--", alpha=0.7)
 
 # 显示图形
