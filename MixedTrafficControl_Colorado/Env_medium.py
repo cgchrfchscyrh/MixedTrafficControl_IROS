@@ -839,20 +839,41 @@ class Env(MultiAgentEnv):
                 # print('Collider Lane:', collider_lane, ' Victim Lane:', victim_lane)
 
                 if collider_lane != '' and victim_lane != '':
-                    collider_direction = [conn[6] for conn in traci.lane.getLinks(collider_lane, extended=True)][0]  # Index 6 contains the direction
-                    victim_direction = [conn[6] for conn in traci.lane.getLinks(victim_lane, extended=True)][0]  # Index 6 contains the direction
-                    
-                    # print('Collider Direction:', collider_direction, ' Victim Direction:', victim_direction)
+                    collider_links = traci.lane.getLinks(collider_lane, extended=True)
+                    victim_links = traci.lane.getLinks(victim_lane, extended=True)
 
-                    if (collider_direction == 'l' and victim_direction == 's') or (collider_direction == 's' and victim_direction == 'l'):
-                        # print('Left-straight collision')
-                        self.Ls_collision += 1
-                    elif collider_direction == 'l' and victim_direction == 'l':
-                        # print('Left-left collision')
-                        self.LL_collision += 1
+                    # 确保列表非空且索引 6 存在
+                    if collider_links and len(collider_links[0]) > 6 and victim_links and len(victim_links[0]) > 6:
+                        collider_direction = collider_links[0][6]  # 取第一个连接的方向
+                        victim_direction = victim_links[0][6]  # 取第一个连接的方向
+
+                        if (collider_direction == 'l' and victim_direction == 's') or (collider_direction == 's' and victim_direction == 'l'):
+                            # print('Left-straight collision')
+                            self.Ls_collision += 1
+                        elif collider_direction == 'l' and victim_direction == 'l':
+                            # print('Left-left collision')
+                            self.LL_collision += 1
+                        else:
+                            # print('Straight-straight collision')
+                            self.ss_collision += 1
                     else:
-                        # print('Straight-straight collision')
-                        self.ss_collision += 1
+                        print("Warning: No valid lane links found for collider or victim lane.")
+
+                # if collider_lane != '' and victim_lane != '':
+                #     collider_direction = [conn[6] for conn in traci.lane.getLinks(collider_lane, extended=True)][0]  # Index 6 contains the direction
+                #     victim_direction = [conn[6] for conn in traci.lane.getLinks(victim_lane, extended=True)][0]  # Index 6 contains the direction
+                    
+                #     # print('Collider Direction:', collider_direction, ' Victim Direction:', victim_direction)
+
+                #     if (collider_direction == 'l' and victim_direction == 's') or (collider_direction == 's' and victim_direction == 'l'):
+                #         # print('Left-straight collision')
+                #         self.Ls_collision += 1
+                #     elif collider_direction == 'l' and victim_direction == 'l':
+                #         # print('Left-left collision')
+                #         self.LL_collision += 1
+                #     else:
+                #         # print('Straight-straight collision')
+                #         self.ss_collision += 1
 
                 if collider_type == 'RL' and victim_type == 'RL':
                     self.RV_RV_collisions += 1
